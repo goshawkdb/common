@@ -3,8 +3,9 @@ using Go = import "go.capnp";
 $Go.package("capnp");
 $Go.import("goshawkdb.io/common/capnp");
 
-@0xa2ff51a4491e88a6;
+@0xdc0a03440ff7a67f;
 
-struct ProposerState {
-  acceptors @0: List(UInt32);
+struct VarIdPos {
+  id        @0: Data;
+  positions @1: List(UInt8);
 }
