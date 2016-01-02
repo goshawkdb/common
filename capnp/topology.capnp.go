@@ -12,26 +12,30 @@ import (
 
 type Topology C.Struct
 
-func NewTopology(s *C.Segment) Topology       { return Topology(s.NewStruct(8, 4)) }
-func NewRootTopology(s *C.Segment) Topology   { return Topology(s.NewRootStruct(8, 4)) }
-func AutoNewTopology(s *C.Segment) Topology   { return Topology(s.NewStructAR(8, 4)) }
-func ReadRootTopology(s *C.Segment) Topology  { return Topology(s.Root(0).ToStruct()) }
-func (s Topology) ClusterId() string          { return C.Struct(s).GetObject(0).ToText() }
-func (s Topology) SetClusterId(v string)      { C.Struct(s).SetObject(0, s.Segment.NewText(v)) }
-func (s Topology) Version() uint32            { return C.Struct(s).Get32(0) }
-func (s Topology) SetVersion(v uint32)        { C.Struct(s).Set32(0, v) }
-func (s Topology) Hosts() C.TextList          { return C.TextList(C.Struct(s).GetObject(1)) }
-func (s Topology) SetHosts(v C.TextList)      { C.Struct(s).SetObject(1, C.Object(v)) }
-func (s Topology) F() uint8                   { return C.Struct(s).Get8(4) }
-func (s Topology) SetF(v uint8)               { C.Struct(s).Set8(4, v) }
-func (s Topology) MaxRMCount() uint8          { return C.Struct(s).Get8(5) }
-func (s Topology) SetMaxRMCount(v uint8)      { C.Struct(s).Set8(5, v) }
-func (s Topology) AsyncFlush() bool           { return C.Struct(s).Get1(48) }
-func (s Topology) SetAsyncFlush(v bool)       { C.Struct(s).Set1(48, v) }
-func (s Topology) Rms() C.UInt32List          { return C.UInt32List(C.Struct(s).GetObject(2)) }
-func (s Topology) SetRms(v C.UInt32List)      { C.Struct(s).SetObject(2, C.Object(v)) }
-func (s Topology) Accounts() Account_List     { return Account_List(C.Struct(s).GetObject(3)) }
-func (s Topology) SetAccounts(v Account_List) { C.Struct(s).SetObject(3, C.Object(v)) }
+func NewTopology(s *C.Segment) Topology           { return Topology(s.NewStruct(8, 6)) }
+func NewRootTopology(s *C.Segment) Topology       { return Topology(s.NewRootStruct(8, 6)) }
+func AutoNewTopology(s *C.Segment) Topology       { return Topology(s.NewStructAR(8, 6)) }
+func ReadRootTopology(s *C.Segment) Topology      { return Topology(s.Root(0).ToStruct()) }
+func (s Topology) ClusterId() string              { return C.Struct(s).GetObject(0).ToText() }
+func (s Topology) SetClusterId(v string)          { C.Struct(s).SetObject(0, s.Segment.NewText(v)) }
+func (s Topology) Version() uint32                { return C.Struct(s).Get32(0) }
+func (s Topology) SetVersion(v uint32)            { C.Struct(s).Set32(0, v) }
+func (s Topology) Hosts() C.TextList              { return C.TextList(C.Struct(s).GetObject(1)) }
+func (s Topology) SetHosts(v C.TextList)          { C.Struct(s).SetObject(1, C.Object(v)) }
+func (s Topology) F() uint8                       { return C.Struct(s).Get8(4) }
+func (s Topology) SetF(v uint8)                   { C.Struct(s).Set8(4, v) }
+func (s Topology) MaxRMCount() uint8              { return C.Struct(s).Get8(5) }
+func (s Topology) SetMaxRMCount(v uint8)          { C.Struct(s).Set8(5, v) }
+func (s Topology) AsyncFlush() bool               { return C.Struct(s).Get1(48) }
+func (s Topology) SetAsyncFlush(v bool)           { C.Struct(s).Set1(48, v) }
+func (s Topology) Rms() C.UInt32List              { return C.UInt32List(C.Struct(s).GetObject(2)) }
+func (s Topology) SetRms(v C.UInt32List)          { C.Struct(s).SetObject(2, C.Object(v)) }
+func (s Topology) Accounts() Account_List         { return Account_List(C.Struct(s).GetObject(3)) }
+func (s Topology) SetAccounts(v Account_List)     { C.Struct(s).SetObject(3, C.Object(v)) }
+func (s Topology) ClusterCertificate() []byte     { return C.Struct(s).GetObject(4).ToData() }
+func (s Topology) SetClusterCertificate(v []byte) { C.Struct(s).SetObject(4, s.Segment.NewData(v)) }
+func (s Topology) ClusterPrivateKey() []byte      { return C.Struct(s).GetObject(5).ToData() }
+func (s Topology) SetClusterPrivateKey(v []byte)  { C.Struct(s).SetObject(5, s.Segment.NewData(v)) }
 func (s Topology) WriteJSON(w io.Writer) error {
 	b := bufio.NewWriter(w)
 	var err error
@@ -235,6 +239,44 @@ func (s Topology) WriteJSON(w io.Writer) error {
 			}
 			err = b.WriteByte(']')
 		}
+		if err != nil {
+			return err
+		}
+	}
+	err = b.WriteByte(',')
+	if err != nil {
+		return err
+	}
+	_, err = b.WriteString("\"clusterCertificate\":")
+	if err != nil {
+		return err
+	}
+	{
+		s := s.ClusterCertificate()
+		buf, err = json.Marshal(s)
+		if err != nil {
+			return err
+		}
+		_, err = b.Write(buf)
+		if err != nil {
+			return err
+		}
+	}
+	err = b.WriteByte(',')
+	if err != nil {
+		return err
+	}
+	_, err = b.WriteString("\"clusterPrivateKey\":")
+	if err != nil {
+		return err
+	}
+	{
+		s := s.ClusterPrivateKey()
+		buf, err = json.Marshal(s)
+		if err != nil {
+			return err
+		}
+		_, err = b.Write(buf)
 		if err != nil {
 			return err
 		}
@@ -458,6 +500,44 @@ func (s Topology) WriteCapLit(w io.Writer) error {
 			return err
 		}
 	}
+	_, err = b.WriteString(", ")
+	if err != nil {
+		return err
+	}
+	_, err = b.WriteString("clusterCertificate = ")
+	if err != nil {
+		return err
+	}
+	{
+		s := s.ClusterCertificate()
+		buf, err = json.Marshal(s)
+		if err != nil {
+			return err
+		}
+		_, err = b.Write(buf)
+		if err != nil {
+			return err
+		}
+	}
+	_, err = b.WriteString(", ")
+	if err != nil {
+		return err
+	}
+	_, err = b.WriteString("clusterPrivateKey = ")
+	if err != nil {
+		return err
+	}
+	{
+		s := s.ClusterPrivateKey()
+		buf, err = json.Marshal(s)
+		if err != nil {
+			return err
+		}
+		_, err = b.Write(buf)
+		if err != nil {
+			return err
+		}
+	}
 	err = b.WriteByte(')')
 	if err != nil {
 		return err
@@ -474,7 +554,7 @@ func (s Topology) MarshalCapLit() ([]byte, error) {
 type Topology_List C.PointerList
 
 func NewTopologyList(s *C.Segment, sz int) Topology_List {
-	return Topology_List(s.NewCompositeList(8, 4, sz))
+	return Topology_List(s.NewCompositeList(8, 6, sz))
 }
 func (s Topology_List) Len() int          { return C.PointerList(s).Len() }
 func (s Topology_List) At(i int) Topology { return Topology(C.PointerList(s).At(i).ToStruct()) }
