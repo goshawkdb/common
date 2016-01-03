@@ -13,12 +13,5 @@ struct Topology {
   maxRMCount         @4: UInt8;
   asyncFlush         @5: Bool;
   rms                @6: List(UInt32);
-  accounts           @7: List(Account);
-  clusterCertificate @8: Data;
-  clusterPrivateKey  @9: Data;
-}
-
-struct Account {
-  username @0: Text;
-  password @1: Text;
+  fingerprints       @7: List(Data);
 }
