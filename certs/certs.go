@@ -9,8 +9,6 @@ import (
 	"crypto/x509/pkix"
 	"encoding/pem"
 	"errors"
-	"fmt"
-	"github.com/howeyc/gopass"
 	"math/big"
 	"time"
 )
@@ -57,7 +55,7 @@ func getCertificateFields() (time.Time, time.Time, []byte, []byte) {
 	return notBefore, notAfter, serialBytes, subjectKeyId
 }
 
-func NewClusterCertificate(passphrase []byte) (*CertificatePrivateKeyPair, error) {
+func NewClusterCertificate() (*CertificatePrivateKeyPair, error) {
 	privKey, privKeyDER, err := newKey()
 	if err != nil {
 		return nil, err
@@ -87,17 +85,7 @@ func NewClusterCertificate(passphrase []byte) (*CertificatePrivateKeyPair, error
 
 	var certBuf, privBuf bytes.Buffer
 	pem.Encode(&certBuf, &pem.Block{Bytes: derBytes, Type: "CERTIFICATE"})
-
-	if len(passphrase) == 0 {
-		pem.Encode(&privBuf, &pem.Block{Bytes: privKeyDER, Type: "EC PRIVATE KEY"})
-
-	} else {
-		privBlockEnc, err := x509.EncryptPEMBlock(rand.Reader, "EC PRIVATE KEY", privKeyDER, passphrase, x509.PEMCipherAES256)
-		if err != nil {
-			return nil, err
-		}
-		pem.Encode(&privBuf, privBlockEnc)
-	}
+	pem.Encode(&privBuf, &pem.Block{Bytes: privKeyDER, Type: "EC PRIVATE KEY"})
 
 	return &CertificatePrivateKeyPair{
 		Certificate:    derBytes,
@@ -127,15 +115,6 @@ func parseCertificatePrivate(certificate []byte) (*x509.Certificate, *ecdsa.Priv
 	}
 
 	privBlock, _ := pem.Decode(rest)
-	if x509.IsEncryptedPEMBlock(privBlock) {
-		fmt.Print("Enter passphrase for Cluster Private Key: ")
-		passphrase := gopass.GetPasswd()
-		privBlock.Bytes, err = x509.DecryptPEMBlock(privBlock, passphrase)
-		if err != nil {
-			return nil, nil, err
-		}
-	}
-
 	if privBlock.Type != "EC PRIVATE KEY" {
 		return nil, nil, errors.New("didn't find expected private key in PEM data")
 	}
@@ -148,7 +127,7 @@ func parseCertificatePrivate(certificate []byte) (*x509.Certificate, *ecdsa.Priv
 	return cert, privKey, nil
 }
 
-func NewClientCertificate(passphrase, certificate []byte) (*CertificatePrivateKeyPair, error) {
+func NewClientCertificate(certificate []byte) (*CertificatePrivateKeyPair, error) {
 	rootCert, rootKey, err := ExtractAndVerifyCertificate(certificate)
 	if err != nil {
 		return nil, err
@@ -182,17 +161,7 @@ func NewClientCertificate(passphrase, certificate []byte) (*CertificatePrivateKe
 
 	var certBuf, privBuf bytes.Buffer
 	pem.Encode(&certBuf, &pem.Block{Bytes: certDER, Type: "CERTIFICATE"})
-
-	if len(passphrase) == 0 {
-		pem.Encode(&privBuf, &pem.Block{Bytes: privKeyDER, Type: "EC PRIVATE KEY"})
-
-	} else {
-		privBlockEnc, err := x509.EncryptPEMBlock(rand.Reader, "EC PRIVATE KEY", privKeyDER, passphrase, x509.PEMCipherAES256)
-		if err != nil {
-			return nil, err
-		}
-		pem.Encode(&privBuf, privBlockEnc)
-	}
+	pem.Encode(&privBuf, &pem.Block{Bytes: privKeyDER, Type: "EC PRIVATE KEY"})
 
 	return &CertificatePrivateKeyPair{
 		Certificate:    certDER,
