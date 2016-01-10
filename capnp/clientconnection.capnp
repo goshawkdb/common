@@ -12,13 +12,7 @@ using CTxn = import "clienttransaction.capnp";
 struct Hello {
  product   @0: Text;
  version   @1: Text;
- publicKey @2: Data;
- isClient  @3: Bool;
-}
-
-struct HelloFromClient {
- username @0: Text;
- password @1: Data;
+ isClient  @2: Bool;
 }
 
 struct HelloFromServer {
