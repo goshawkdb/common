@@ -1,5 +1,5 @@
 # nix-build 0.1
-# Should get 6f76q9ahm991in9715csjs6d3nnbl156-go1.5-goshawkdb-server-dist-bin
+# Should get cvll79ardsigy4r672xcg1w1aj2idmix-go1.5-goshawkdb-server-dist-bin
 
 with import <nixpkgs> {}; with go15Packages;
 
@@ -75,7 +75,7 @@ let
       sha256 = "0f7b65dlpjhjb028mszmxj1wx4nnnz37hf9cv5h2sbxwwwzas0ki";
     };
     propagatedBuildInputs = [ goshawkdb-common capnp skiplist chancell gomdb crypto ];
-    buildInpots = [ patchelf ];
+    buildInputs = [ patchelf ];
     postInstall = ''
       find $bin/bin -type f | while read t; do
         patchelf --set-interpreter /lib64/ld-linux-x86-64.so.2 $t
