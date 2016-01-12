@@ -186,74 +186,30 @@ func (s Hello_List) ToArray() []Hello {
 }
 func (s Hello_List) Set(i int, item Hello) { C.PointerList(s).Set(i, C.Object(item)) }
 
-type HelloFromServer C.Struct
+type HelloClientFromServer C.Struct
 
-func NewHelloFromServer(s *C.Segment) HelloFromServer { return HelloFromServer(s.NewStruct(8, 5)) }
-func NewRootHelloFromServer(s *C.Segment) HelloFromServer {
-	return HelloFromServer(s.NewRootStruct(8, 5))
+func NewHelloClientFromServer(s *C.Segment) HelloClientFromServer {
+	return HelloClientFromServer(s.NewStruct(0, 2))
 }
-func AutoNewHelloFromServer(s *C.Segment) HelloFromServer { return HelloFromServer(s.NewStructAR(8, 5)) }
-func ReadRootHelloFromServer(s *C.Segment) HelloFromServer {
-	return HelloFromServer(s.Root(0).ToStruct())
+func NewRootHelloClientFromServer(s *C.Segment) HelloClientFromServer {
+	return HelloClientFromServer(s.NewRootStruct(0, 2))
 }
-func (s HelloFromServer) LocalHost() string         { return C.Struct(s).GetObject(0).ToText() }
-func (s HelloFromServer) SetLocalHost(v string)     { C.Struct(s).SetObject(0, s.Segment.NewText(v)) }
-func (s HelloFromServer) TieBreak() uint32          { return C.Struct(s).Get32(0) }
-func (s HelloFromServer) SetTieBreak(v uint32)      { C.Struct(s).Set32(0, v) }
-func (s HelloFromServer) Namespace() []byte         { return C.Struct(s).GetObject(1).ToData() }
-func (s HelloFromServer) SetNamespace(v []byte)     { C.Struct(s).SetObject(1, s.Segment.NewData(v)) }
-func (s HelloFromServer) TopologyDBVersion() []byte { return C.Struct(s).GetObject(2).ToData() }
-func (s HelloFromServer) SetTopologyDBVersion(v []byte) {
-	C.Struct(s).SetObject(2, s.Segment.NewData(v))
+func AutoNewHelloClientFromServer(s *C.Segment) HelloClientFromServer {
+	return HelloClientFromServer(s.NewStructAR(0, 2))
 }
-func (s HelloFromServer) Topology() Topology     { return Topology(C.Struct(s).GetObject(3).ToStruct()) }
-func (s HelloFromServer) SetTopology(v Topology) { C.Struct(s).SetObject(3, C.Object(v)) }
-func (s HelloFromServer) Root() VarIdPos         { return VarIdPos(C.Struct(s).GetObject(4).ToStruct()) }
-func (s HelloFromServer) SetRoot(v VarIdPos)     { C.Struct(s).SetObject(4, C.Object(v)) }
-func (s HelloFromServer) WriteJSON(w io.Writer) error {
+func ReadRootHelloClientFromServer(s *C.Segment) HelloClientFromServer {
+	return HelloClientFromServer(s.Root(0).ToStruct())
+}
+func (s HelloClientFromServer) Namespace() []byte     { return C.Struct(s).GetObject(0).ToData() }
+func (s HelloClientFromServer) SetNamespace(v []byte) { C.Struct(s).SetObject(0, s.Segment.NewData(v)) }
+func (s HelloClientFromServer) RootId() []byte        { return C.Struct(s).GetObject(1).ToData() }
+func (s HelloClientFromServer) SetRootId(v []byte)    { C.Struct(s).SetObject(1, s.Segment.NewData(v)) }
+func (s HelloClientFromServer) WriteJSON(w io.Writer) error {
 	b := bufio.NewWriter(w)
 	var err error
 	var buf []byte
 	_ = buf
 	err = b.WriteByte('{')
-	if err != nil {
-		return err
-	}
-	_, err = b.WriteString("\"localHost\":")
-	if err != nil {
-		return err
-	}
-	{
-		s := s.LocalHost()
-		buf, err = json.Marshal(s)
-		if err != nil {
-			return err
-		}
-		_, err = b.Write(buf)
-		if err != nil {
-			return err
-		}
-	}
-	err = b.WriteByte(',')
-	if err != nil {
-		return err
-	}
-	_, err = b.WriteString("\"tieBreak\":")
-	if err != nil {
-		return err
-	}
-	{
-		s := s.TieBreak()
-		buf, err = json.Marshal(s)
-		if err != nil {
-			return err
-		}
-		_, err = b.Write(buf)
-		if err != nil {
-			return err
-		}
-	}
-	err = b.WriteByte(',')
 	if err != nil {
 		return err
 	}
@@ -276,47 +232,17 @@ func (s HelloFromServer) WriteJSON(w io.Writer) error {
 	if err != nil {
 		return err
 	}
-	_, err = b.WriteString("\"topologyDBVersion\":")
+	_, err = b.WriteString("\"rootId\":")
 	if err != nil {
 		return err
 	}
 	{
-		s := s.TopologyDBVersion()
+		s := s.RootId()
 		buf, err = json.Marshal(s)
 		if err != nil {
 			return err
 		}
 		_, err = b.Write(buf)
-		if err != nil {
-			return err
-		}
-	}
-	err = b.WriteByte(',')
-	if err != nil {
-		return err
-	}
-	_, err = b.WriteString("\"topology\":")
-	if err != nil {
-		return err
-	}
-	{
-		s := s.Topology()
-		err = s.WriteJSON(b)
-		if err != nil {
-			return err
-		}
-	}
-	err = b.WriteByte(',')
-	if err != nil {
-		return err
-	}
-	_, err = b.WriteString("\"root\":")
-	if err != nil {
-		return err
-	}
-	{
-		s := s.Root()
-		err = s.WriteJSON(b)
 		if err != nil {
 			return err
 		}
@@ -328,55 +254,17 @@ func (s HelloFromServer) WriteJSON(w io.Writer) error {
 	err = b.Flush()
 	return err
 }
-func (s HelloFromServer) MarshalJSON() ([]byte, error) {
+func (s HelloClientFromServer) MarshalJSON() ([]byte, error) {
 	b := bytes.Buffer{}
 	err := s.WriteJSON(&b)
 	return b.Bytes(), err
 }
-func (s HelloFromServer) WriteCapLit(w io.Writer) error {
+func (s HelloClientFromServer) WriteCapLit(w io.Writer) error {
 	b := bufio.NewWriter(w)
 	var err error
 	var buf []byte
 	_ = buf
 	err = b.WriteByte('(')
-	if err != nil {
-		return err
-	}
-	_, err = b.WriteString("localHost = ")
-	if err != nil {
-		return err
-	}
-	{
-		s := s.LocalHost()
-		buf, err = json.Marshal(s)
-		if err != nil {
-			return err
-		}
-		_, err = b.Write(buf)
-		if err != nil {
-			return err
-		}
-	}
-	_, err = b.WriteString(", ")
-	if err != nil {
-		return err
-	}
-	_, err = b.WriteString("tieBreak = ")
-	if err != nil {
-		return err
-	}
-	{
-		s := s.TieBreak()
-		buf, err = json.Marshal(s)
-		if err != nil {
-			return err
-		}
-		_, err = b.Write(buf)
-		if err != nil {
-			return err
-		}
-	}
-	_, err = b.WriteString(", ")
 	if err != nil {
 		return err
 	}
@@ -399,47 +287,17 @@ func (s HelloFromServer) WriteCapLit(w io.Writer) error {
 	if err != nil {
 		return err
 	}
-	_, err = b.WriteString("topologyDBVersion = ")
+	_, err = b.WriteString("rootId = ")
 	if err != nil {
 		return err
 	}
 	{
-		s := s.TopologyDBVersion()
+		s := s.RootId()
 		buf, err = json.Marshal(s)
 		if err != nil {
 			return err
 		}
 		_, err = b.Write(buf)
-		if err != nil {
-			return err
-		}
-	}
-	_, err = b.WriteString(", ")
-	if err != nil {
-		return err
-	}
-	_, err = b.WriteString("topology = ")
-	if err != nil {
-		return err
-	}
-	{
-		s := s.Topology()
-		err = s.WriteCapLit(b)
-		if err != nil {
-			return err
-		}
-	}
-	_, err = b.WriteString(", ")
-	if err != nil {
-		return err
-	}
-	_, err = b.WriteString("root = ")
-	if err != nil {
-		return err
-	}
-	{
-		s := s.Root()
-		err = s.WriteCapLit(b)
 		if err != nil {
 			return err
 		}
@@ -451,30 +309,30 @@ func (s HelloFromServer) WriteCapLit(w io.Writer) error {
 	err = b.Flush()
 	return err
 }
-func (s HelloFromServer) MarshalCapLit() ([]byte, error) {
+func (s HelloClientFromServer) MarshalCapLit() ([]byte, error) {
 	b := bytes.Buffer{}
 	err := s.WriteCapLit(&b)
 	return b.Bytes(), err
 }
 
-type HelloFromServer_List C.PointerList
+type HelloClientFromServer_List C.PointerList
 
-func NewHelloFromServerList(s *C.Segment, sz int) HelloFromServer_List {
-	return HelloFromServer_List(s.NewCompositeList(8, 5, sz))
+func NewHelloClientFromServerList(s *C.Segment, sz int) HelloClientFromServer_List {
+	return HelloClientFromServer_List(s.NewCompositeList(0, 2, sz))
 }
-func (s HelloFromServer_List) Len() int { return C.PointerList(s).Len() }
-func (s HelloFromServer_List) At(i int) HelloFromServer {
-	return HelloFromServer(C.PointerList(s).At(i).ToStruct())
+func (s HelloClientFromServer_List) Len() int { return C.PointerList(s).Len() }
+func (s HelloClientFromServer_List) At(i int) HelloClientFromServer {
+	return HelloClientFromServer(C.PointerList(s).At(i).ToStruct())
 }
-func (s HelloFromServer_List) ToArray() []HelloFromServer {
+func (s HelloClientFromServer_List) ToArray() []HelloClientFromServer {
 	n := s.Len()
-	a := make([]HelloFromServer, n)
+	a := make([]HelloClientFromServer, n)
 	for i := 0; i < n; i++ {
 		a[i] = s.At(i)
 	}
 	return a
 }
-func (s HelloFromServer_List) Set(i int, item HelloFromServer) {
+func (s HelloClientFromServer_List) Set(i int, item HelloClientFromServer) {
 	C.PointerList(s).Set(i, C.Object(item))
 }
 

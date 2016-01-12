@@ -5,8 +5,6 @@ $Go.import("goshawkdb.io/common/capnp");
 
 @0xb807d103e02b2b62;
 
-using Topology = import "topology.capnp";
-using VarId = import "varid.capnp";
 using CTxn = import "clienttransaction.capnp";
 
 struct Hello {
@@ -15,13 +13,9 @@ struct Hello {
  isClient  @2: Bool;
 }
 
-struct HelloFromServer {
- localHost         @0: Text;
- tieBreak          @1: UInt32;
- namespace         @2: Data;
- topologyDBVersion @3: Data;
- topology          @4: Topology.Topology;
- root              @5: VarId.VarIdPos;
+struct HelloClientFromServer {
+ namespace @0: Data;
+ rootId    @1: Data;
 }
 
 struct ClientMessage {
