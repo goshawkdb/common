@@ -157,3 +157,17 @@ func (rmIds RMIds) NonEmptyLen() int {
 	}
 	return count
 }
+
+func (rmIds RMIds) NonEmpty() RMIds {
+	nel := rmIds.NonEmptyLen()
+	if nel == len(rmIds) {
+		return rmIds
+	}
+	nonEmpty := make([]RMId, 0, nel)
+	for _, rmId := range rmIds {
+		if rmId != RMIdEmpty {
+			nonEmpty = append(nonEmpty, rmId)
+		}
+	}
+	return nonEmpty
+}
