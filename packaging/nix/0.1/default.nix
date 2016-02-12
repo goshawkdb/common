@@ -51,7 +51,7 @@ let
     goshawkdb-common = buildGoPackage rec {
       name = "goshawkdb-common";
       goPackagePath = "goshawkdb.io/common";
-      rev = "df8631857532";
+      rev = "goshawkdb_0.1";
       src = fetchhg {
         inherit rev;
         url = "https://src.${goPackagePath}";
