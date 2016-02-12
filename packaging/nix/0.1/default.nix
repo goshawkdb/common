@@ -63,12 +63,10 @@ let
     goshawkdb-server = buildGoPackage rec {
       name = "goshawkdb-server";
       goPackagePath = "goshawkdb.io/server";
-      rev = "debcf84b047b";
-      src = fetchhg {
-        inherit rev;
-        url = "https://src.${goPackagePath}";
-        sha256 = "0f7b65dlpjhjb028mszmxj1wx4nnnz37hf9cv5h2sbxwwwzas0ki";
-      };
+      src = fetchurl {
+        url = "https://src.goshawkdb.io/server/archive/goshawkdb_0.1.tar.gz";
+        sha256 = "0sq7p5m8aqm1mqdm5qid4lh1hdrn26yi0pcz624crwcyp5nh891k";
+      } // { archiveTimeStampSrc = "server-goshawkdb_0.1/.hg_archival.txt"; };
       buildInputs = [ goshawkdb-common capnp skiplist chancell gomdb crypto ];
     };
 
@@ -79,12 +77,14 @@ let
       builder = ./builder-patchelf.sh;
     };
 
-    goshawkdb-server-deb = stdenv.mkDerivation {
+    goshawkdb-server-deb = stdenv.mkDerivation rec {
       name = "goshawkdb-server-deb";
       server = goshawkdb-server-dist;
       debian = ./debian;
       builder = ./builder-deb.sh;
       buildInputs = [ dpkg fakeroot ];
+      inherit (goshawkdb-server) src;
+      inherit (goshawkdb-server.src) archiveTimeStampSrc;
     };
   };
 in
