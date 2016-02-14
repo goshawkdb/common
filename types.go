@@ -67,33 +67,51 @@ func (txnId TxnId) ClientId() [ClientLen]byte {
 	return client
 }
 
-func (a *TxnId) Equal(b *TxnId) bool {
-	return a == b || (a != nil && b != nil && bytes.Equal(a[:], b[:]))
-}
+type Cmp int8
 
-func (a *TxnId) LessThan(b *TxnId) bool {
+const (
+	LT Cmp = iota - 1
+	EQ
+	GT
+)
+
+func (a *TxnId) Compare(b *TxnId) Cmp {
 	switch {
-	case b == nil:
-		return false
+	case a == b:
+		return EQ
 	case a == nil:
-		return true
+		return LT
+	case b == nil:
+		return GT
 	default:
-		return bytes.Compare(a[:], b[:]) < 0
+		switch cmp := bytes.Compare(a[:], b[:]); {
+		case cmp < 0:
+			return LT
+		case cmp > 0:
+			return GT
+		default:
+			return EQ
+		}
 	}
 }
 
-func (a *VarUUId) Equal(b *VarUUId) bool {
-	return a == b || (a != nil && b != nil && bytes.Equal(a[:], b[:]))
-}
-
-func (a *VarUUId) LessThan(b *VarUUId) bool {
+func (a *VarUUId) Compare(b *VarUUId) Cmp {
 	switch {
-	case b == nil:
-		return false
+	case a == b:
+		return EQ
 	case a == nil:
-		return true
+		return LT
+	case b == nil:
+		return GT
 	default:
-		return bytes.Compare(a[:], b[:]) < 0
+		switch cmp := bytes.Compare(a[:], b[:]); {
+		case cmp < 0:
+			return LT
+		case cmp > 0:
+			return GT
+		default:
+			return EQ
+		}
 	}
 }
 
@@ -101,7 +119,7 @@ type VarUUIds []*VarUUId
 
 func (vUUIds VarUUIds) Sort()              { sort.Sort(vUUIds) }
 func (vUUIds VarUUIds) Len() int           { return len(vUUIds) }
-func (vUUIds VarUUIds) Less(i, j int) bool { return vUUIds[i].LessThan(vUUIds[j]) }
+func (vUUIds VarUUIds) Less(i, j int) bool { return vUUIds[i].Compare(vUUIds[j]) == LT }
 func (vUUIds VarUUIds) Swap(i, j int)      { vUUIds[i], vUUIds[j] = vUUIds[j], vUUIds[i] }
 
 type Positions capn.UInt8List
