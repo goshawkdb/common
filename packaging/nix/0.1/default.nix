@@ -66,7 +66,10 @@ let
       src = fetchurl {
         url = "https://src.goshawkdb.io/server/archive/goshawkdb_0.1.tar.gz";
         sha256 = "0sq7p5m8aqm1mqdm5qid4lh1hdrn26yi0pcz624crwcyp5nh891k";
-      } // { archiveTimeStampSrc = "server-goshawkdb_0.1/.hg_archival.txt"; };
+      } // {
+        archiveTimeStampSrc = "server-goshawkdb_0.1/.hg_archival.txt";
+        license = "server-goshawkdb_0.1/LICENSE";
+      };
       buildInputs = [ goshawkdb-common capnp skiplist chancell gomdb crypto ];
     };
 
@@ -84,7 +87,7 @@ let
       builder = ./builder-deb.sh;
       buildInputs = [ dpkg fakeroot ];
       inherit (goshawkdb-server) src;
-      inherit (goshawkdb-server.src) archiveTimeStampSrc;
+      inherit (goshawkdb-server.src) archiveTimeStampSrc license;
     };
   };
 in
