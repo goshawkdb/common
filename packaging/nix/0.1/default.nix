@@ -55,7 +55,7 @@ let
       src = fetchhg {
         inherit rev;
         url = "https://src.${goPackagePath}";
-        sha256 = "0d55ixvaa7xl8jp14xqz60yfja1cw09iz88bpdgcf78mf5vd34cz";
+        sha256 = "04fy03rga2nd399grr8ws7fmk3g6gnjqwndclrr1dc87p91yh0jy";
       };
       propagatedBuildInputs = [ capnp ];
     };
