@@ -3,6 +3,7 @@
 with import <nixpkgs> {}; with go15Packages;
 
 let
+  goshawkdbVersion = "0.1";
   self = rec {
     skiplist = buildFromGitHub {
       rev = "57733164b18444c51f63e9a80f1693961dde8036";
@@ -51,7 +52,7 @@ let
     goshawkdb-common = buildGoPackage rec {
       name = "goshawkdb-common";
       goPackagePath = "goshawkdb.io/common";
-      rev = "goshawkdb_0.1";
+      rev = "goshawkdb_${goshawkdbVersion}";
       src = fetchhg {
         inherit rev;
         url = "https://src.${goPackagePath}";
@@ -64,11 +65,11 @@ let
       name = "goshawkdb-server";
       goPackagePath = "goshawkdb.io/server";
       src = fetchurl {
-        url = "https://src.goshawkdb.io/server/archive/goshawkdb_0.1.tar.gz";
+        url = "https://src.goshawkdb.io/server/archive/goshawkdb_${goshawkdbVersion}.tar.gz";
         sha256 = "0sq7p5m8aqm1mqdm5qid4lh1hdrn26yi0pcz624crwcyp5nh891k";
       } // {
-        archiveTimeStampSrc = "server-goshawkdb_0.1/.hg_archival.txt";
-        license = "server-goshawkdb_0.1/LICENSE";
+        archiveTimeStampSrc = "server-goshawkdb_${goshawkdbVersion}/.hg_archival.txt";
+        license = "server-goshawkdb_${goshawkdbVersion}/LICENSE";
       };
       buildInputs = [ goshawkdb-common capnp skiplist chancell gomdb crypto ];
     };
@@ -88,6 +89,29 @@ let
       buildInputs = [ dpkg fakeroot ];
       inherit (goshawkdb-server) src;
       inherit (goshawkdb-server.src) archiveTimeStampSrc license;
+    };
+
+    goshawkdb-server-tar = stdenv.mkDerivation rec {
+      name = "goshawkdb-server-tar";
+      server = goshawkdb-server-dist;
+      debian = ./debian;
+      builder = ./builder-tar.sh;
+      buildInputs = [ fakeroot ];
+      inherit (goshawkdb-server) src;
+      inherit (goshawkdb-server.src) archiveTimeStampSrc license;
+      inherit goshawkdbVersion;
+    };
+
+    goshawkdb-server-rpm = stdenv.mkDerivation rec {
+      name = "goshawkdb-server-rpm";
+      server = goshawkdb-server-dist;
+      tar = goshawkdb-server-tar;
+      spec = ./rpm/goshawkdb-server.spec;
+      builder = ./builder-rpm.sh;
+      buildInputs = [ rpm file ];
+      inherit (goshawkdb-server) src;
+      inherit (goshawkdb-server.src) archiveTimeStampSrc;
+      inherit goshawkdbVersion;
     };
   };
 in
