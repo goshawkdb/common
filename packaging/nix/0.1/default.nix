@@ -108,7 +108,7 @@ let
       tar = goshawkdb-server-tar;
       spec = ./rpm/goshawkdb-server.spec;
       builder = ./builder-rpm.sh;
-      buildInputs = [ rpm file ];
+      buildInputs = [ rpm file libfaketime ];
       inherit (goshawkdb-server) src;
       inherit (goshawkdb-server.src) archiveTimeStampSrc;
       inherit goshawkdbVersion;

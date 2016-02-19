@@ -25,7 +25,7 @@ cd $TMP/debian
 md5sum $(find usr -depth -type f | sort) > $TMP/debian/DEBIAN/md5sums
 cd $TMP
 chmod -R 755 $TMP/debian/usr/bin
-for t in $(find $TMP/debian -depth | sort); do
+for t in $(find $TMP/debian -depth); do
   touch -ad "${timestamp}" $t
   touch -md "${timestamp}" $t
 done

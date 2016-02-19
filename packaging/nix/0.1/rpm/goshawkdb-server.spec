@@ -6,9 +6,16 @@ Requires: lmdb-libs >= 0.9.10
 Group: Applications/Databases
 License: AGPLv3
 SOURCE0: %{buildroot}/%{name}-%{version}.tar.xz
+URL: https://goshawkdb.io/
 
 %description
-%{summary}
+GoshawkDB is a distributed, transactional, fault-tolerant object
+store. It supports full general purpose transactions with
+strong-serializability isolation only. It is a CP system with
+configurable tolerance to failure. It is a schema-less data store,
+which supports automatic sharding of data and is horizontally
+scalable.
+
 
 %prep
 %setup -q
@@ -18,22 +25,25 @@ SOURCE0: %{buildroot}/%{name}-%{version}.tar.xz
 
 %install
 rm -rf %{buildroot}
-mkdir -p  %{buildroot}
+mkdir -p  %{buildroot}%{_bindir}
+mv bin $(dirname %{buildroot}%{_bindir})
 
-# in builddir
-mkdir -p %{buildroot}/usr
-cp -a bin %{buildroot}/usr/
-mkdir -p %{buildroot}/usr/share/doc/%{name}-%{version}
-cp LICENSE %{buildroot}/usr/share/doc/%{name}-%{version}/
+for t in $(find %{buildroot} -depth); do
+  touch -ad '%{timestamp}' $t
+  touch -md '%{timestamp}' $t
+done
+
+touch -ad '%{timestamp}' LICENSE
+touch -md '%{timestamp}' LICENSE
 
 %clean
 rm -rf %{buildroot}
 
 %files
 %defattr(-,root,root,-)
-/usr/share/doc/%{name}-%{version}/LICENSE
-/usr/bin/consistencychecker
-/usr/bin/goshawkdb
+%doc LICENSE
+%{_bindir}/consistencychecker
+%{_bindir}/goshawkdb
 
 
 %changelog

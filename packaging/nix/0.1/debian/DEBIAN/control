@@ -13,5 +13,3 @@ Description: GoshawkDB distributed data store server
  configurable tolerance to failure. It is a schema-less data store,
  which supports automatic sharding of data and is horizontally
  scalable.
- .
- This package provides the server for GoshawkDB 0.1.
