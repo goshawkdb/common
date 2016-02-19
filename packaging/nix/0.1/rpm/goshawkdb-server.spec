@@ -6,6 +6,7 @@ Requires: lmdb-libs >= 0.9.10
 Group: Applications/Databases
 License: AGPLv3
 SOURCE0: %{buildroot}/%{name}-%{version}.tar.xz
+Packager: Matthew Sackman <matthew@goshawkdb.io>
 URL: https://goshawkdb.io/
 
 %description
@@ -47,7 +48,7 @@ rm -rf %{buildroot}
 
 
 %changelog
-* Fri Dec 18 2015  Matthew Sackman <matthew@goshawkdb.io> 1.0-1
+* Fri Dec 18 2015  Matthew Sackman <matthew@goshawkdb.io> 0.1-1
 - Initial release
 
 EOF
