@@ -166,6 +166,16 @@ func (a RMIds) Equal(b RMIds) bool {
 	return true
 }
 
+func (rmIds RMIds) EmptyLen() int {
+	count := 0
+	for _, rmId := range rmIds {
+		if rmId == RMIdEmpty {
+			count++
+		}
+	}
+	return count
+}
+
 func (rmIds RMIds) NonEmptyLen() int {
 	count := 0
 	for _, rmId := range rmIds {
