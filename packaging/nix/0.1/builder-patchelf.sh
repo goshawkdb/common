@@ -1,9 +1,10 @@
-source $stdenv/setup
-mkdir -p $out/bin
-cp -r $src/bin $out/
-for t in $(ls $out/bin); do
-  patchelf --set-interpreter /lib64/ld-linux-x86-64.so.2 $out/bin/$t
-  patchelf --set-rpath '' $out/bin/$t
-  strip -o $out/bin/$t.stripped $out/bin/$t
-  mv $out/bin/$t.stripped $out/bin/$t
+mkdir -p $TMP
+cp -ar $src/bin $TMP/
+chmod a+w $TMP/bin
+for t in $(ls $TMP/bin); do
+  chmod a+w $TMP/bin/$t
+  patchelf --set-interpreter /lib64/ld-linux-x86-64.so.2 $TMP/bin/$t
+  patchelf --set-rpath '' $TMP/bin/$t
+  strip -o $TMP/bin/$t.stripped $TMP/bin/$t
+  mv $TMP/bin/$t.stripped $out/bin/$t
 done
