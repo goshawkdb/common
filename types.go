@@ -2,6 +2,7 @@ package common
 
 import (
 	"bytes"
+	"encoding/binary"
 	"encoding/hex"
 	"fmt"
 	capn "github.com/glycerine/go-capnproto"
@@ -47,6 +48,18 @@ func (vUUId VarUUId) String() string {
 	return fmt.Sprintf("VarUUId:%s", h)
 }
 
+func (vUUId VarUUId) ConnectionCount() uint32 {
+	return binary.BigEndian.Uint32(vUUId[8:12])
+}
+
+func (vUUId VarUUId) BootCount() uint32 {
+	return binary.BigEndian.Uint32(vUUId[12:16])
+}
+
+func (vUUId VarUUId) RMId() RMId {
+	return RMId(binary.BigEndian.Uint32(vUUId[16:20]))
+}
+
 type TxnId KeyType
 
 func MakeTxnId(data []byte) *TxnId {
@@ -65,6 +78,18 @@ func (txnId TxnId) ClientId() [ClientLen]byte {
 	client := [ClientLen]byte{}
 	copy(client[:], txnId[8:])
 	return client
+}
+
+func (txnId TxnId) ConnectionCount() uint32 {
+	return binary.BigEndian.Uint32(txnId[8:12])
+}
+
+func (txnId TxnId) BootCount() uint32 {
+	return binary.BigEndian.Uint32(txnId[12:16])
+}
+
+func (txnId TxnId) RMId() RMId {
+	return RMId(binary.BigEndian.Uint32(txnId[16:20]))
 }
 
 type Cmp int8
@@ -166,6 +191,16 @@ func (a RMIds) Equal(b RMIds) bool {
 	return true
 }
 
+func (rmIds RMIds) EmptyLen() int {
+	count := 0
+	for _, rmId := range rmIds {
+		if rmId == RMIdEmpty {
+			count++
+		}
+	}
+	return count
+}
+
 func (rmIds RMIds) NonEmptyLen() int {
 	count := 0
 	for _, rmId := range rmIds {
@@ -174,4 +209,18 @@ func (rmIds RMIds) NonEmptyLen() int {
 		}
 	}
 	return count
+}
+
+func (rmIds RMIds) NonEmpty() RMIds {
+	nel := rmIds.NonEmptyLen()
+	if nel == len(rmIds) {
+		return rmIds
+	}
+	nonEmpty := make([]RMId, 0, nel)
+	for _, rmId := range rmIds {
+		if rmId != RMIdEmpty {
+			nonEmpty = append(nonEmpty, rmId)
+		}
+	}
+	return nonEmpty
 }
