@@ -1,3 +1,5 @@
+source $stdenv/setup
+mkdir -p $out/bin
 mkdir -p $TMP
 cp -ar $src/bin $TMP/
 chmod a+w $TMP/bin
