@@ -2,6 +2,7 @@ package common
 
 import (
 	"bytes"
+	"encoding/binary"
 	"encoding/hex"
 	"fmt"
 	capn "github.com/glycerine/go-capnproto"
@@ -47,6 +48,18 @@ func (vUUId VarUUId) String() string {
 	return fmt.Sprintf("VarUUId:%s", h)
 }
 
+func (vUUId VarUUId) ConnectionCount() uint32 {
+	return binary.BigEndian.Uint32(vUUId[8:12])
+}
+
+func (vUUId VarUUId) BootCount() uint32 {
+	return binary.BigEndian.Uint32(vUUId[12:16])
+}
+
+func (vUUId VarUUId) RMId() RMId {
+	return RMId(binary.BigEndian.Uint32(vUUId[16:20]))
+}
+
 type TxnId KeyType
 
 func MakeTxnId(data []byte) *TxnId {
@@ -67,33 +80,63 @@ func (txnId TxnId) ClientId() [ClientLen]byte {
 	return client
 }
 
-func (a *TxnId) Equal(b *TxnId) bool {
-	return a == b || (a != nil && b != nil && bytes.Equal(a[:], b[:]))
+func (txnId TxnId) ConnectionCount() uint32 {
+	return binary.BigEndian.Uint32(txnId[8:12])
 }
 
-func (a *TxnId) LessThan(b *TxnId) bool {
+func (txnId TxnId) BootCount() uint32 {
+	return binary.BigEndian.Uint32(txnId[12:16])
+}
+
+func (txnId TxnId) RMId() RMId {
+	return RMId(binary.BigEndian.Uint32(txnId[16:20]))
+}
+
+type Cmp int8
+
+const (
+	LT Cmp = iota - 1
+	EQ
+	GT
+)
+
+func (a *TxnId) Compare(b *TxnId) Cmp {
 	switch {
-	case b == nil:
-		return false
+	case a == b:
+		return EQ
 	case a == nil:
-		return true
+		return LT
+	case b == nil:
+		return GT
 	default:
-		return bytes.Compare(a[:], b[:]) < 0
+		switch cmp := bytes.Compare(a[:], b[:]); {
+		case cmp < 0:
+			return LT
+		case cmp > 0:
+			return GT
+		default:
+			return EQ
+		}
 	}
 }
 
-func (a *VarUUId) Equal(b *VarUUId) bool {
-	return a == b || (a != nil && b != nil && bytes.Equal(a[:], b[:]))
-}
-
-func (a *VarUUId) LessThan(b *VarUUId) bool {
+func (a *VarUUId) Compare(b *VarUUId) Cmp {
 	switch {
-	case b == nil:
-		return false
+	case a == b:
+		return EQ
 	case a == nil:
-		return true
+		return LT
+	case b == nil:
+		return GT
 	default:
-		return bytes.Compare(a[:], b[:]) < 0
+		switch cmp := bytes.Compare(a[:], b[:]); {
+		case cmp < 0:
+			return LT
+		case cmp > 0:
+			return GT
+		default:
+			return EQ
+		}
 	}
 }
 
@@ -101,7 +144,7 @@ type VarUUIds []*VarUUId
 
 func (vUUIds VarUUIds) Sort()              { sort.Sort(vUUIds) }
 func (vUUIds VarUUIds) Len() int           { return len(vUUIds) }
-func (vUUIds VarUUIds) Less(i, j int) bool { return vUUIds[i].LessThan(vUUIds[j]) }
+func (vUUIds VarUUIds) Less(i, j int) bool { return vUUIds[i].Compare(vUUIds[j]) == LT }
 func (vUUIds VarUUIds) Swap(i, j int)      { vUUIds[i], vUUIds[j] = vUUIds[j], vUUIds[i] }
 
 type Positions capn.UInt8List
@@ -148,6 +191,16 @@ func (a RMIds) Equal(b RMIds) bool {
 	return true
 }
 
+func (rmIds RMIds) EmptyLen() int {
+	count := 0
+	for _, rmId := range rmIds {
+		if rmId == RMIdEmpty {
+			count++
+		}
+	}
+	return count
+}
+
 func (rmIds RMIds) NonEmptyLen() int {
 	count := 0
 	for _, rmId := range rmIds {
@@ -156,4 +209,18 @@ func (rmIds RMIds) NonEmptyLen() int {
 		}
 	}
 	return count
+}
+
+func (rmIds RMIds) NonEmpty() RMIds {
+	nel := rmIds.NonEmptyLen()
+	if nel == len(rmIds) {
+		return rmIds
+	}
+	nonEmpty := make([]RMId, 0, nel)
+	for _, rmId := range rmIds {
+		if rmId != RMIdEmpty {
+			nonEmpty = append(nonEmpty, rmId)
+		}
+	}
+	return nonEmpty
 }

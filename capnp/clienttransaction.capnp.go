@@ -1113,7 +1113,8 @@ func (s ClientTxnOutcome) SetAbort(v ClientUpdate_List) {
 	C.Struct(s).Set16(0, 1)
 	C.Struct(s).SetObject(2, C.Object(v))
 }
-func (s ClientTxnOutcome) Error() string { return C.Struct(s).GetObject(2).ToText() }
+func (s ClientTxnOutcome) Error() string      { return C.Struct(s).GetObject(2).ToText() }
+func (s ClientTxnOutcome) ErrorBytes() []byte { return C.Struct(s).GetObject(2).ToDataTrimLastByte() }
 func (s ClientTxnOutcome) SetError(v string) {
 	C.Struct(s).Set16(0, 2)
 	C.Struct(s).SetObject(2, s.Segment.NewText(v))
