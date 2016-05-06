@@ -17,8 +17,10 @@ func NewRootHello(s *C.Segment) Hello  { return Hello(s.NewRootStruct(8, 2)) }
 func AutoNewHello(s *C.Segment) Hello  { return Hello(s.NewStructAR(8, 2)) }
 func ReadRootHello(s *C.Segment) Hello { return Hello(s.Root(0).ToStruct()) }
 func (s Hello) Product() string        { return C.Struct(s).GetObject(0).ToText() }
+func (s Hello) ProductBytes() []byte   { return C.Struct(s).GetObject(0).ToDataTrimLastByte() }
 func (s Hello) SetProduct(v string)    { C.Struct(s).SetObject(0, s.Segment.NewText(v)) }
 func (s Hello) Version() string        { return C.Struct(s).GetObject(1).ToText() }
+func (s Hello) VersionBytes() []byte   { return C.Struct(s).GetObject(1).ToDataTrimLastByte() }
 func (s Hello) SetVersion(v string)    { C.Struct(s).SetObject(1, s.Segment.NewText(v)) }
 func (s Hello) IsClient() bool         { return C.Struct(s).Get1(0) }
 func (s Hello) SetIsClient(v bool)     { C.Struct(s).Set1(0, v) }
