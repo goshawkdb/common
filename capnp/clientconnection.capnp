@@ -1,7 +1,10 @@
 using Go = import "go.capnp";
-
 $Go.package("capnp");
 $Go.import("goshawkdb.io/common/capnp");
+
+using Java = import "java.capnp";
+$Java.package("io.goshawkdb.client.capnp");
+$Java.outerClassname("ConnectionCap");
 
 @0xb807d103e02b2b62;
 
