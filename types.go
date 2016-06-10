@@ -224,3 +224,69 @@ func (rmIds RMIds) NonEmpty() RMIds {
 	}
 	return nonEmpty
 }
+
+type ValueCaps uint8
+
+const (
+	None      ValueCaps = iota
+	Read                = iota
+	Write               = iota
+	ReadWrite           = iota
+)
+
+func (vc ValueCaps) String() string {
+	switch vc {
+	case None:
+		return "None"
+	case Read:
+		return "Read"
+	case Write:
+		return "Write"
+	default:
+		return "ReadWrite"
+	}
+}
+
+type ReferenceCapabilities struct {
+	All  bool
+	Only []uint32
+}
+
+func (a ReferenceCapabilities) Equal(b ReferenceCapabilities) bool {
+	if !(a.All == b.All &&
+		len(a.Only) == len(b.Only)) {
+		return false
+	}
+	for idx, index := range a.Only {
+		if index != b.Only[idx] {
+			return false
+		}
+	}
+	return true
+}
+
+func (rc ReferenceCapabilities) String() string {
+	if rc.All {
+		return "All"
+	}
+	return fmt.Sprintf("OnlyIndices: %v", rc.Only)
+}
+
+type Capabilities struct {
+	Value      ValueCaps
+	References struct {
+		Read  ReferenceCapabilities
+		Write ReferenceCapabilities
+	}
+}
+
+func (c *Capabilities) String() string {
+	return fmt.Sprintf("Capabilities(Value: %v; References: Read: %v; Write: %v)",
+		c.Value, c.References.Read, c.References.Write)
+}
+
+func (a *Capabilities) Equal(b *Capabilities) bool {
+	return a.Value == b.Value &&
+		a.References.Read.Equal(b.References.Read) &&
+		a.References.Write.Equal(b.References.Write)
+}
