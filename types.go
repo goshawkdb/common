@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	capn "github.com/glycerine/go-capnproto"
+	msgs "goshawkdb.io/common/capnp"
 	"sort"
 )
 
@@ -289,4 +290,40 @@ func (a *Capabilities) Equal(b *Capabilities) bool {
 	return a.Value == b.Value &&
 		a.References.Read.Equal(b.References.Read) &&
 		a.References.Write.Equal(b.References.Write)
+}
+
+func (c *Capabilities) AddToSeg(seg *capn.Segment) msgs.Capabilities {
+	cap := msgs.NewCapabilities(seg)
+	switch c.Value {
+	case None:
+		cap.SetValue(msgs.VALUECAPABILITY_NONE)
+	case Read:
+		cap.SetValue(msgs.VALUECAPABILITY_READ)
+	case Write:
+		cap.SetValue(msgs.VALUECAPABILITY_WRITE)
+	case ReadWrite:
+		cap.SetValue(msgs.VALUECAPABILITY_READWRITE)
+	}
+	refs := cap.References()
+	if c.References.Read.All {
+		refs.Read().SetAll()
+	} else {
+		only := c.References.Read.Only
+		indicesCap := seg.NewUInt32List(len(only))
+		for idx, index := range only {
+			indicesCap.Set(idx, index)
+		}
+		refs.Read().SetOnly(indicesCap)
+	}
+	if c.References.Write.All {
+		refs.Write().SetAll()
+	} else {
+		only := c.References.Write.Only
+		indicesCap := seg.NewUInt32List(len(only))
+		for idx, index := range only {
+			indicesCap.Set(idx, index)
+		}
+		refs.Write().SetOnly(indicesCap)
+	}
+	return cap
 }
