@@ -273,57 +273,36 @@ func (rc ReferenceCapabilities) String() string {
 	return fmt.Sprintf("OnlyIndices: %v", rc.Only)
 }
 
-type Capabilities struct {
-	Value      ValueCaps
-	References struct {
-		Read  ReferenceCapabilities
-		Write ReferenceCapabilities
+func EqualCapabilities(a, b *msgs.Capabilities) bool {
+	if a.Value() != b.Value() {
+		return false
 	}
-}
-
-func (c *Capabilities) String() string {
-	return fmt.Sprintf("Capabilities(Value: %v; References: Read: %v; Write: %v)",
-		c.Value, c.References.Read, c.References.Write)
-}
-
-func (a *Capabilities) Equal(b *Capabilities) bool {
-	return a.Value == b.Value &&
-		a.References.Read.Equal(b.References.Read) &&
-		a.References.Write.Equal(b.References.Write)
-}
-
-func (c *Capabilities) AddToSeg(seg *capn.Segment) msgs.Capabilities {
-	cap := msgs.NewCapabilities(seg)
-	switch c.Value {
-	case None:
-		cap.SetValue(msgs.VALUECAPABILITY_NONE)
-	case Read:
-		cap.SetValue(msgs.VALUECAPABILITY_READ)
-	case Write:
-		cap.SetValue(msgs.VALUECAPABILITY_WRITE)
-	case ReadWrite:
-		cap.SetValue(msgs.VALUECAPABILITY_READWRITE)
+	aRefs, bRefs := a.References(), b.References()
+	if aRefs.Read().Which() != bRefs.Read().Which() ||
+		aRefs.Write().Which() != bRefs.Write().Which() {
+		return false
 	}
-	refs := cap.References()
-	if c.References.Read.All {
-		refs.Read().SetAll()
-	} else {
-		only := c.References.Read.Only
-		indicesCap := seg.NewUInt32List(len(only))
-		for idx, index := range only {
-			indicesCap.Set(idx, index)
+	if aRefs.Read().Which() == msgs.CAPABILITIESREFERENCESREAD_ONLY {
+		aOnly, bOnly := aRefs.Read().Only().ToArray(), bRefs.Read().Only().ToArray()
+		if len(aOnly) != len(bOnly) {
+			return false
 		}
-		refs.Read().SetOnly(indicesCap)
-	}
-	if c.References.Write.All {
-		refs.Write().SetAll()
-	} else {
-		only := c.References.Write.Only
-		indicesCap := seg.NewUInt32List(len(only))
-		for idx, index := range only {
-			indicesCap.Set(idx, index)
+		for idx, aIndex := range aOnly {
+			if aIndex != bOnly[idx] {
+				return false
+			}
 		}
-		refs.Write().SetOnly(indicesCap)
 	}
-	return cap
+	if aRefs.Write().Which() == msgs.CAPABILITIESREFERENCESWRITE_ONLY {
+		aOnly, bOnly := aRefs.Write().Only().ToArray(), bRefs.Write().Only().ToArray()
+		if len(aOnly) != len(bOnly) {
+			return false
+		}
+		for idx, aIndex := range aOnly {
+			if aIndex != bOnly[idx] {
+				return false
+			}
+		}
+	}
+	return true
 }
