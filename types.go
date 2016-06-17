@@ -226,53 +226,6 @@ func (rmIds RMIds) NonEmpty() RMIds {
 	return nonEmpty
 }
 
-type ValueCaps uint8
-
-const (
-	None      ValueCaps = iota
-	Read                = iota
-	Write               = iota
-	ReadWrite           = iota
-)
-
-func (vc ValueCaps) String() string {
-	switch vc {
-	case None:
-		return "None"
-	case Read:
-		return "Read"
-	case Write:
-		return "Write"
-	default:
-		return "ReadWrite"
-	}
-}
-
-type ReferenceCapabilities struct {
-	All  bool
-	Only []uint32
-}
-
-func (a ReferenceCapabilities) Equal(b ReferenceCapabilities) bool {
-	if !(a.All == b.All &&
-		len(a.Only) == len(b.Only)) {
-		return false
-	}
-	for idx, index := range a.Only {
-		if index != b.Only[idx] {
-			return false
-		}
-	}
-	return true
-}
-
-func (rc ReferenceCapabilities) String() string {
-	if rc.All {
-		return "All"
-	}
-	return fmt.Sprintf("OnlyIndices: %v", rc.Only)
-}
-
 func EqualCapabilities(a, b *msgs.Capabilities) bool {
 	if a.Value() != b.Value() {
 		return false
