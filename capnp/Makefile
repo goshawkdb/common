@@ -1,4 +1,4 @@
-CAPNP := $(patsubst %.capnp,%.capnp.go,$(filter-out go.capnp,$(wildcard *.capnp)))
+CAPNP := $(patsubst %.capnp,%.capnp.go,$(filter-out go.capnp java.capnp,$(wildcard *.capnp)))
 CAPNPGO := $(wildcard *.capnp.go)
 
 all: capnp

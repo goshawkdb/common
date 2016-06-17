@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	capn "github.com/glycerine/go-capnproto"
+	msgs "goshawkdb.io/common/capnp"
 	"sort"
 )
 
@@ -223,4 +224,38 @@ func (rmIds RMIds) NonEmpty() RMIds {
 		}
 	}
 	return nonEmpty
+}
+
+func EqualCapabilities(a, b *msgs.Capabilities) bool {
+	if a.Value() != b.Value() {
+		return false
+	}
+	aRefs, bRefs := a.References(), b.References()
+	if aRefs.Read().Which() != bRefs.Read().Which() ||
+		aRefs.Write().Which() != bRefs.Write().Which() {
+		return false
+	}
+	if aRefs.Read().Which() == msgs.CAPABILITIESREFERENCESREAD_ONLY {
+		aOnly, bOnly := aRefs.Read().Only().ToArray(), bRefs.Read().Only().ToArray()
+		if len(aOnly) != len(bOnly) {
+			return false
+		}
+		for idx, aIndex := range aOnly {
+			if aIndex != bOnly[idx] {
+				return false
+			}
+		}
+	}
+	if aRefs.Write().Which() == msgs.CAPABILITIESREFERENCESWRITE_ONLY {
+		aOnly, bOnly := aRefs.Write().Only().ToArray(), bRefs.Write().Only().ToArray()
+		if len(aOnly) != len(bOnly) {
+			return false
+		}
+		for idx, aIndex := range aOnly {
+			if aIndex != bOnly[idx] {
+				return false
+			}
+		}
+	}
+	return true
 }
