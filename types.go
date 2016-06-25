@@ -259,3 +259,10 @@ func EqualCapabilities(a, b *msgs.Capabilities) bool {
 	}
 	return true
 }
+
+type SortUInt32 []uint32
+
+func (nums SortUInt32) Sort()              { sort.Sort(nums) }
+func (nums SortUInt32) Len() int           { return len(nums) }
+func (nums SortUInt32) Less(i, j int) bool { return nums[i] < nums[j] }
+func (nums SortUInt32) Swap(i, j int)      { nums[i], nums[j] = nums[j], nums[i] }
