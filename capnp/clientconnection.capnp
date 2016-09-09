@@ -23,9 +23,9 @@ struct HelloClientFromServer {
 }
 
 struct Root {
-  name         @0: Text;
-  varId        @1: Data;
-  capabilities @2: Cap.Capabilities;
+  name       @0: Text;
+  varId      @1: Data;
+  capability @2: Cap.Capability;
 }
 
 struct ClientMessage {

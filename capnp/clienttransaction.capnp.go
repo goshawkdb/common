@@ -1525,10 +1525,10 @@ func AutoNewClientVarIdPos(s *C.Segment) ClientVarIdPos  { return ClientVarIdPos
 func ReadRootClientVarIdPos(s *C.Segment) ClientVarIdPos { return ClientVarIdPos(s.Root(0).ToStruct()) }
 func (s ClientVarIdPos) VarId() []byte                   { return C.Struct(s).GetObject(0).ToData() }
 func (s ClientVarIdPos) SetVarId(v []byte)               { C.Struct(s).SetObject(0, s.Segment.NewData(v)) }
-func (s ClientVarIdPos) Capabilities() Capabilities {
-	return Capabilities(C.Struct(s).GetObject(1).ToStruct())
+func (s ClientVarIdPos) Capability() Capability {
+	return Capability(C.Struct(s).GetObject(1).ToStruct())
 }
-func (s ClientVarIdPos) SetCapabilities(v Capabilities) { C.Struct(s).SetObject(1, C.Object(v)) }
+func (s ClientVarIdPos) SetCapability(v Capability) { C.Struct(s).SetObject(1, C.Object(v)) }
 func (s ClientVarIdPos) WriteJSON(w io.Writer) error {
 	b := bufio.NewWriter(w)
 	var err error
@@ -1557,12 +1557,12 @@ func (s ClientVarIdPos) WriteJSON(w io.Writer) error {
 	if err != nil {
 		return err
 	}
-	_, err = b.WriteString("\"capabilities\":")
+	_, err = b.WriteString("\"capability\":")
 	if err != nil {
 		return err
 	}
 	{
-		s := s.Capabilities()
+		s := s.Capability()
 		err = s.WriteJSON(b)
 		if err != nil {
 			return err
@@ -1608,12 +1608,12 @@ func (s ClientVarIdPos) WriteCapLit(w io.Writer) error {
 	if err != nil {
 		return err
 	}
-	_, err = b.WriteString("capabilities = ")
+	_, err = b.WriteString("capability = ")
 	if err != nil {
 		return err
 	}
 	{
-		s := s.Capabilities()
+		s := s.Capability()
 		err = s.WriteCapLit(b)
 		if err != nil {
 			return err

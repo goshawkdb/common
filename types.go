@@ -226,182 +226,76 @@ func (rmIds RMIds) NonEmpty() RMIds {
 	return nonEmpty
 }
 
-var MaxCapsCap *Capabilities
+var MaxCapability *Capability
 
 func init() {
 	seg := capn.NewBuffer(nil)
-	cap := msgs.NewCapabilities(seg)
-	cap.SetValue(msgs.VALUECAPABILITY_READWRITE)
-	ref := cap.References()
-	ref.Read().SetAll()
-	ref.Write().SetAll()
-	MaxCapsCap = NewCapabilities(cap)
+	cap := msgs.NewCapability(seg)
+	cap.SetReadWrite()
+	MaxCapability = NewCapability(cap)
 }
 
-type Capabilities struct {
-	msgs.Capabilities
+type Capability struct {
+	msgs.Capability
 }
 
-func NewCapabilities(c msgs.Capabilities) *Capabilities {
-	return &Capabilities{Capabilities: c}
+func NewCapability(c msgs.Capability) *Capability {
+	return &Capability{Capability: c}
 }
 
-func (a *Capabilities) Equal(b *Capabilities) bool {
-	if a.Value() != b.Value() {
-		return false
-	}
-	aRefs, bRefs := a.References(), b.References()
-	if aRefs.Read().Which() != bRefs.Read().Which() ||
-		aRefs.Write().Which() != bRefs.Write().Which() {
-		return false
-	}
-	if aRefs.Read().Which() == msgs.CAPABILITIESREFERENCESREAD_ONLY {
-		aOnly, bOnly := aRefs.Read().Only().ToArray(), bRefs.Read().Only().ToArray()
-		if len(aOnly) != len(bOnly) {
-			return false
-		}
-		for idx, aIndex := range aOnly {
-			if aIndex != bOnly[idx] {
-				return false
-			}
-		}
-	}
-	if aRefs.Write().Which() == msgs.CAPABILITIESREFERENCESWRITE_ONLY {
-		aOnly, bOnly := aRefs.Write().Only().ToArray(), bRefs.Write().Only().ToArray()
-		if len(aOnly) != len(bOnly) {
-			return false
-		}
-		for idx, aIndex := range aOnly {
-			if aIndex != bOnly[idx] {
-				return false
-			}
-		}
-	}
-	return true
+func (a *Capability) Equal(b *Capability) bool {
+	return a == b || a.Which() == b.Which()
 }
 
-func (c *Capabilities) String() string {
-	value := ""
-	switch c.Value() {
-	case msgs.VALUECAPABILITY_NONE:
-		value = "None"
-	case msgs.VALUECAPABILITY_READ:
-		value = "Read"
-	case msgs.VALUECAPABILITY_WRITE:
-		value = "Write"
-	case msgs.VALUECAPABILITY_READWRITE:
-		value = "ReadWrite"
+func (c *Capability) String() string {
+	switch c.Which() {
+	case msgs.CAPABILITY_READ:
+		return "Read"
+	case msgs.CAPABILITY_WRITE:
+		return "Write"
+	case msgs.CAPABILITY_READWRITE:
+		return "ReadWrite"
+	default:
+		return "None"
 	}
-	refsRead := ""
-	if c.References().Read().Which() == msgs.CAPABILITIESREFERENCESREAD_ALL {
-		refsRead = "All"
-	} else {
-		refsRead = fmt.Sprintf("%v", c.References().Read().Only().ToArray())
-	}
-	refsWrite := ""
-	if c.References().Write().Which() == msgs.CAPABILITIESREFERENCESWRITE_ALL {
-		refsWrite = "All"
-	} else {
-		refsWrite = fmt.Sprintf("%v", c.References().Write().Only().ToArray())
-	}
-	return fmt.Sprintf("{capability: value: %s; refsRead: %s; refsWrite: %s}", value, refsRead, refsWrite)
 }
 
-func (a *Capabilities) Union(b *Capabilities) *Capabilities {
+func (a *Capability) Union(b *Capability) *Capability {
 	switch {
 	case a == b:
 		return a
-	case a == MaxCapsCap || b == MaxCapsCap:
-		return MaxCapsCap
+	case a == MaxCapability || b == MaxCapability:
+		return MaxCapability
 	case a == nil:
 		return b
 	case b == nil:
 		return a
 	}
 
-	aValue := a.Value()
-	aRefsRead := a.References().Read()
-	aRefsWrite := a.References().Write()
+	aCap := a.Which()
+	bCap := b.Which()
 
-	bValue := b.Value()
-	bRefsRead := b.References().Read()
-	bRefsWrite := b.References().Write()
+	read := aCap == msgs.CAPABILITY_READWRITE || aCap == msgs.CAPABILITY_READ ||
+		bCap == msgs.CAPABILITY_READWRITE || bCap == msgs.CAPABILITY_READ
+	write := aCap == msgs.CAPABILITY_READWRITE || aCap == msgs.CAPABILITY_WRITE ||
+		bCap == msgs.CAPABILITY_READWRITE || bCap == msgs.CAPABILITY_WRITE
 
-	valueRead := aValue == msgs.VALUECAPABILITY_READWRITE || aValue == msgs.VALUECAPABILITY_READ ||
-		bValue == msgs.VALUECAPABILITY_READWRITE || bValue == msgs.VALUECAPABILITY_READ
-	valueWrite := aValue == msgs.VALUECAPABILITY_READWRITE || aValue == msgs.VALUECAPABILITY_WRITE ||
-		bValue == msgs.VALUECAPABILITY_READWRITE || bValue == msgs.VALUECAPABILITY_WRITE
-	refsReadAll := aRefsRead.Which() == msgs.CAPABILITIESREFERENCESREAD_ALL || bRefsRead.Which() == msgs.CAPABILITIESREFERENCESREAD_ONLY
-	refsWriteAll := aRefsWrite.Which() == msgs.CAPABILITIESREFERENCESWRITE_ALL || bRefsWrite.Which() == msgs.CAPABILITIESREFERENCESWRITE_ALL
-
-	if valueRead && valueWrite && refsReadAll && refsWriteAll {
-		return MaxCapsCap
+	if read && write {
+		return MaxCapability
 	}
 
 	seg := capn.NewBuffer(nil)
-	cap := msgs.NewCapabilities(seg)
+	cap := msgs.NewCapability(seg)
 	switch {
-	case valueRead && valueWrite:
-		cap.SetValue(msgs.VALUECAPABILITY_READWRITE)
-	case valueWrite:
-		cap.SetValue(msgs.VALUECAPABILITY_WRITE)
-	case valueRead:
-		cap.SetValue(msgs.VALUECAPABILITY_WRITE)
+	case read:
+		cap.SetRead()
+	case write:
+		cap.SetWrite()
 	default:
-		cap.SetValue(msgs.VALUECAPABILITY_NONE)
+		cap.SetNone()
 	}
 
-	if refsReadAll {
-		cap.References().Read().SetAll()
-	} else {
-		aOnly, bOnly := aRefsRead.Only().ToArray(), bRefsRead.Only().ToArray()
-		cap.References().Read().SetOnly(mergeOnliesSeg(seg, aOnly, bOnly))
-	}
-
-	if refsWriteAll {
-		cap.References().Write().SetAll()
-	} else {
-		aOnly, bOnly := aRefsWrite.Only().ToArray(), bRefsWrite.Only().ToArray()
-		cap.References().Write().SetOnly(mergeOnliesSeg(seg, aOnly, bOnly))
-	}
-
-	return NewCapabilities(cap)
-}
-
-func mergeOnliesSeg(seg *capn.Segment, a, b []uint32) capn.UInt32List {
-	only := mergeOnlies(a, b)
-
-	cap := seg.NewUInt32List(len(only))
-	for idx, index := range only {
-		cap.Set(idx, index)
-	}
-	return cap
-}
-
-func mergeOnlies(a, b []uint32) []uint32 {
-	only := make([]uint32, 0, len(a)+len(b))
-	for len(a) > 0 && len(b) > 0 {
-		aIndex, bIndex := a[0], b[0]
-		switch {
-		case aIndex < bIndex:
-			only = append(only, aIndex)
-			a = a[1:]
-		case aIndex > bIndex:
-			only = append(only, bIndex)
-			b = b[1:]
-		default:
-			only = append(only, aIndex)
-			a = a[1:]
-			b = b[1:]
-		}
-	}
-	if len(a) > 0 {
-		only = append(only, a...)
-	} else {
-		only = append(only, b...)
-	}
-
-	return only
+	return NewCapability(cap)
 }
 
 type SortUInt32 []uint32

@@ -60,6 +60,6 @@ struct ClientUpdate {
 }
 
 struct ClientVarIdPos {
-  varId        @0: Data;
-  capabilities @1: Cap.Capabilities;
+  varId      @0: Data;
+  capability @1: Cap.Capability;
 }
