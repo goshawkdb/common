@@ -275,6 +275,17 @@ func (a *Capability) Union(b *Capability) *Capability {
 	aCap := a.Which()
 	bCap := b.Which()
 
+	switch {
+	case aCap == msgs.CAPABILITY_NONE:
+		return b
+	case bCap == msgs.CAPABILITY_NONE:
+		return a
+	case aCap == bCap:
+		return a
+	case aCap == msgs.CAPABILITY_READWRITE || bCap == msgs.CAPABILITY_READWRITE:
+		return MaxCapability
+	}
+
 	read := aCap == msgs.CAPABILITY_READWRITE || aCap == msgs.CAPABILITY_READ ||
 		bCap == msgs.CAPABILITY_READWRITE || bCap == msgs.CAPABILITY_READ
 	write := aCap == msgs.CAPABILITY_READWRITE || aCap == msgs.CAPABILITY_WRITE ||
