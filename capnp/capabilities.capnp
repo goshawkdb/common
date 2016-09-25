@@ -4,7 +4,7 @@ $Go.import("goshawkdb.io/common/capnp");
 
 using Java = import "java.capnp";
 $Java.package("io.goshawkdb.client.capnp");
-$Java.outerClassname("TransactionCap");
+$Java.outerClassname("CapabilitiesCap");
 
 @0xd9bafc2f09656f8c;
 
