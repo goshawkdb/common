@@ -4,27 +4,15 @@ $Go.import("goshawkdb.io/common/capnp");
 
 using Java = import "java.capnp";
 $Java.package("io.goshawkdb.client.capnp");
-$Java.outerClassname("TransactionCap");
+$Java.outerClassname("CapabilitiesCap");
 
 @0xd9bafc2f09656f8c;
 
-struct Capabilities {
-  value @0: ValueCapability;
-  references :group {
-    read :union {
-      all  @1: Void;
-      only @2: List(UInt32);
-    }
-    write :union {
-      all  @3: Void;
-      only @4: List(UInt32);
-    }
+struct Capability {
+  union {
+    none      @0: Void;
+    read      @1: Void;
+    write     @2: Void;
+    readWrite @3: Void;
   }
-}
-
-enum ValueCapability {
-  none      @0;
-  read      @1;
-  write     @2;
-  readWrite @3;
 }

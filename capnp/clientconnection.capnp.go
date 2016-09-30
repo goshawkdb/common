@@ -368,17 +368,17 @@ func (s HelloClientFromServer_List) Set(i int, item HelloClientFromServer) {
 
 type Root C.Struct
 
-func NewRoot(s *C.Segment) Root               { return Root(s.NewStruct(0, 3)) }
-func NewRootRoot(s *C.Segment) Root           { return Root(s.NewRootStruct(0, 3)) }
-func AutoNewRoot(s *C.Segment) Root           { return Root(s.NewStructAR(0, 3)) }
-func ReadRootRoot(s *C.Segment) Root          { return Root(s.Root(0).ToStruct()) }
-func (s Root) Name() string                   { return C.Struct(s).GetObject(0).ToText() }
-func (s Root) NameBytes() []byte              { return C.Struct(s).GetObject(0).ToDataTrimLastByte() }
-func (s Root) SetName(v string)               { C.Struct(s).SetObject(0, s.Segment.NewText(v)) }
-func (s Root) VarId() []byte                  { return C.Struct(s).GetObject(1).ToData() }
-func (s Root) SetVarId(v []byte)              { C.Struct(s).SetObject(1, s.Segment.NewData(v)) }
-func (s Root) Capabilities() Capabilities     { return Capabilities(C.Struct(s).GetObject(2).ToStruct()) }
-func (s Root) SetCapabilities(v Capabilities) { C.Struct(s).SetObject(2, C.Object(v)) }
+func NewRoot(s *C.Segment) Root           { return Root(s.NewStruct(0, 3)) }
+func NewRootRoot(s *C.Segment) Root       { return Root(s.NewRootStruct(0, 3)) }
+func AutoNewRoot(s *C.Segment) Root       { return Root(s.NewStructAR(0, 3)) }
+func ReadRootRoot(s *C.Segment) Root      { return Root(s.Root(0).ToStruct()) }
+func (s Root) Name() string               { return C.Struct(s).GetObject(0).ToText() }
+func (s Root) NameBytes() []byte          { return C.Struct(s).GetObject(0).ToDataTrimLastByte() }
+func (s Root) SetName(v string)           { C.Struct(s).SetObject(0, s.Segment.NewText(v)) }
+func (s Root) VarId() []byte              { return C.Struct(s).GetObject(1).ToData() }
+func (s Root) SetVarId(v []byte)          { C.Struct(s).SetObject(1, s.Segment.NewData(v)) }
+func (s Root) Capability() Capability     { return Capability(C.Struct(s).GetObject(2).ToStruct()) }
+func (s Root) SetCapability(v Capability) { C.Struct(s).SetObject(2, C.Object(v)) }
 func (s Root) WriteJSON(w io.Writer) error {
 	b := bufio.NewWriter(w)
 	var err error
@@ -426,12 +426,12 @@ func (s Root) WriteJSON(w io.Writer) error {
 	if err != nil {
 		return err
 	}
-	_, err = b.WriteString("\"capabilities\":")
+	_, err = b.WriteString("\"capability\":")
 	if err != nil {
 		return err
 	}
 	{
-		s := s.Capabilities()
+		s := s.Capability()
 		err = s.WriteJSON(b)
 		if err != nil {
 			return err
@@ -496,12 +496,12 @@ func (s Root) WriteCapLit(w io.Writer) error {
 	if err != nil {
 		return err
 	}
-	_, err = b.WriteString("capabilities = ")
+	_, err = b.WriteString("capability = ")
 	if err != nil {
 		return err
 	}
 	{
-		s := s.Capabilities()
+		s := s.Capability()
 		err = s.WriteCapLit(b)
 		if err != nil {
 			return err

@@ -233,46 +233,58 @@ const (
 	CLIENTACTION_ROLL      ClientAction_Which = 5
 )
 
-func NewClientAction(s *C.Segment) ClientAction            { return ClientAction(s.NewStruct(8, 4)) }
-func NewRootClientAction(s *C.Segment) ClientAction        { return ClientAction(s.NewRootStruct(8, 4)) }
-func AutoNewClientAction(s *C.Segment) ClientAction        { return ClientAction(s.NewStructAR(8, 4)) }
-func ReadRootClientAction(s *C.Segment) ClientAction       { return ClientAction(s.Root(0).ToStruct()) }
-func (s ClientAction) Which() ClientAction_Which           { return ClientAction_Which(C.Struct(s).Get16(0)) }
-func (s ClientAction) VarId() []byte                       { return C.Struct(s).GetObject(0).ToData() }
-func (s ClientAction) SetVarId(v []byte)                   { C.Struct(s).SetObject(0, s.Segment.NewData(v)) }
-func (s ClientAction) Read() ClientActionRead              { return ClientActionRead(s) }
-func (s ClientAction) SetRead()                            { C.Struct(s).Set16(0, 0) }
-func (s ClientActionRead) Version() []byte                 { return C.Struct(s).GetObject(1).ToData() }
-func (s ClientActionRead) SetVersion(v []byte)             { C.Struct(s).SetObject(1, s.Segment.NewData(v)) }
-func (s ClientAction) Write() ClientActionWrite            { return ClientActionWrite(s) }
-func (s ClientAction) SetWrite()                           { C.Struct(s).Set16(0, 1) }
-func (s ClientActionWrite) Value() []byte                  { return C.Struct(s).GetObject(1).ToData() }
-func (s ClientActionWrite) SetValue(v []byte)              { C.Struct(s).SetObject(1, s.Segment.NewData(v)) }
-func (s ClientActionWrite) References() C.DataList         { return C.DataList(C.Struct(s).GetObject(2)) }
-func (s ClientActionWrite) SetReferences(v C.DataList)     { C.Struct(s).SetObject(2, C.Object(v)) }
-func (s ClientAction) Readwrite() ClientActionReadwrite    { return ClientActionReadwrite(s) }
-func (s ClientAction) SetReadwrite()                       { C.Struct(s).Set16(0, 2) }
-func (s ClientActionReadwrite) Version() []byte            { return C.Struct(s).GetObject(1).ToData() }
-func (s ClientActionReadwrite) SetVersion(v []byte)        { C.Struct(s).SetObject(1, s.Segment.NewData(v)) }
-func (s ClientActionReadwrite) Value() []byte              { return C.Struct(s).GetObject(2).ToData() }
-func (s ClientActionReadwrite) SetValue(v []byte)          { C.Struct(s).SetObject(2, s.Segment.NewData(v)) }
-func (s ClientActionReadwrite) References() C.DataList     { return C.DataList(C.Struct(s).GetObject(3)) }
-func (s ClientActionReadwrite) SetReferences(v C.DataList) { C.Struct(s).SetObject(3, C.Object(v)) }
-func (s ClientAction) Create() ClientActionCreate          { return ClientActionCreate(s) }
-func (s ClientAction) SetCreate()                          { C.Struct(s).Set16(0, 3) }
-func (s ClientActionCreate) Value() []byte                 { return C.Struct(s).GetObject(1).ToData() }
-func (s ClientActionCreate) SetValue(v []byte)             { C.Struct(s).SetObject(1, s.Segment.NewData(v)) }
-func (s ClientActionCreate) References() C.DataList        { return C.DataList(C.Struct(s).GetObject(2)) }
-func (s ClientActionCreate) SetReferences(v C.DataList)    { C.Struct(s).SetObject(2, C.Object(v)) }
-func (s ClientAction) SetDelete()                          { C.Struct(s).Set16(0, 4) }
-func (s ClientAction) Roll() ClientActionRoll              { return ClientActionRoll(s) }
-func (s ClientAction) SetRoll()                            { C.Struct(s).Set16(0, 5) }
-func (s ClientActionRoll) Version() []byte                 { return C.Struct(s).GetObject(1).ToData() }
-func (s ClientActionRoll) SetVersion(v []byte)             { C.Struct(s).SetObject(1, s.Segment.NewData(v)) }
-func (s ClientActionRoll) Value() []byte                   { return C.Struct(s).GetObject(2).ToData() }
-func (s ClientActionRoll) SetValue(v []byte)               { C.Struct(s).SetObject(2, s.Segment.NewData(v)) }
-func (s ClientActionRoll) References() C.DataList          { return C.DataList(C.Struct(s).GetObject(3)) }
-func (s ClientActionRoll) SetReferences(v C.DataList)      { C.Struct(s).SetObject(3, C.Object(v)) }
+func NewClientAction(s *C.Segment) ClientAction      { return ClientAction(s.NewStruct(8, 4)) }
+func NewRootClientAction(s *C.Segment) ClientAction  { return ClientAction(s.NewRootStruct(8, 4)) }
+func AutoNewClientAction(s *C.Segment) ClientAction  { return ClientAction(s.NewStructAR(8, 4)) }
+func ReadRootClientAction(s *C.Segment) ClientAction { return ClientAction(s.Root(0).ToStruct()) }
+func (s ClientAction) Which() ClientAction_Which     { return ClientAction_Which(C.Struct(s).Get16(0)) }
+func (s ClientAction) VarId() []byte                 { return C.Struct(s).GetObject(0).ToData() }
+func (s ClientAction) SetVarId(v []byte)             { C.Struct(s).SetObject(0, s.Segment.NewData(v)) }
+func (s ClientAction) Read() ClientActionRead        { return ClientActionRead(s) }
+func (s ClientAction) SetRead()                      { C.Struct(s).Set16(0, 0) }
+func (s ClientActionRead) Version() []byte           { return C.Struct(s).GetObject(1).ToData() }
+func (s ClientActionRead) SetVersion(v []byte)       { C.Struct(s).SetObject(1, s.Segment.NewData(v)) }
+func (s ClientAction) Write() ClientActionWrite      { return ClientActionWrite(s) }
+func (s ClientAction) SetWrite()                     { C.Struct(s).Set16(0, 1) }
+func (s ClientActionWrite) Value() []byte            { return C.Struct(s).GetObject(1).ToData() }
+func (s ClientActionWrite) SetValue(v []byte)        { C.Struct(s).SetObject(1, s.Segment.NewData(v)) }
+func (s ClientActionWrite) References() ClientVarIdPos_List {
+	return ClientVarIdPos_List(C.Struct(s).GetObject(2))
+}
+func (s ClientActionWrite) SetReferences(v ClientVarIdPos_List) { C.Struct(s).SetObject(2, C.Object(v)) }
+func (s ClientAction) Readwrite() ClientActionReadwrite         { return ClientActionReadwrite(s) }
+func (s ClientAction) SetReadwrite()                            { C.Struct(s).Set16(0, 2) }
+func (s ClientActionReadwrite) Version() []byte                 { return C.Struct(s).GetObject(1).ToData() }
+func (s ClientActionReadwrite) SetVersion(v []byte)             { C.Struct(s).SetObject(1, s.Segment.NewData(v)) }
+func (s ClientActionReadwrite) Value() []byte                   { return C.Struct(s).GetObject(2).ToData() }
+func (s ClientActionReadwrite) SetValue(v []byte)               { C.Struct(s).SetObject(2, s.Segment.NewData(v)) }
+func (s ClientActionReadwrite) References() ClientVarIdPos_List {
+	return ClientVarIdPos_List(C.Struct(s).GetObject(3))
+}
+func (s ClientActionReadwrite) SetReferences(v ClientVarIdPos_List) {
+	C.Struct(s).SetObject(3, C.Object(v))
+}
+func (s ClientAction) Create() ClientActionCreate { return ClientActionCreate(s) }
+func (s ClientAction) SetCreate()                 { C.Struct(s).Set16(0, 3) }
+func (s ClientActionCreate) Value() []byte        { return C.Struct(s).GetObject(1).ToData() }
+func (s ClientActionCreate) SetValue(v []byte)    { C.Struct(s).SetObject(1, s.Segment.NewData(v)) }
+func (s ClientActionCreate) References() ClientVarIdPos_List {
+	return ClientVarIdPos_List(C.Struct(s).GetObject(2))
+}
+func (s ClientActionCreate) SetReferences(v ClientVarIdPos_List) {
+	C.Struct(s).SetObject(2, C.Object(v))
+}
+func (s ClientAction) SetDelete()              { C.Struct(s).Set16(0, 4) }
+func (s ClientAction) Roll() ClientActionRoll  { return ClientActionRoll(s) }
+func (s ClientAction) SetRoll()                { C.Struct(s).Set16(0, 5) }
+func (s ClientActionRoll) Version() []byte     { return C.Struct(s).GetObject(1).ToData() }
+func (s ClientActionRoll) SetVersion(v []byte) { C.Struct(s).SetObject(1, s.Segment.NewData(v)) }
+func (s ClientActionRoll) Value() []byte       { return C.Struct(s).GetObject(2).ToData() }
+func (s ClientActionRoll) SetValue(v []byte)   { C.Struct(s).SetObject(2, s.Segment.NewData(v)) }
+func (s ClientActionRoll) References() ClientVarIdPos_List {
+	return ClientVarIdPos_List(C.Struct(s).GetObject(3))
+}
+func (s ClientActionRoll) SetReferences(v ClientVarIdPos_List) { C.Struct(s).SetObject(3, C.Object(v)) }
 func (s ClientAction) WriteJSON(w io.Writer) error {
 	b := bufio.NewWriter(w)
 	var err error
@@ -377,11 +389,7 @@ func (s ClientAction) WriteJSON(w io.Writer) error {
 						if err != nil {
 							return err
 						}
-						buf, err = json.Marshal(s)
-						if err != nil {
-							return err
-						}
-						_, err = b.Write(buf)
+						err = s.WriteJSON(b)
 						if err != nil {
 							return err
 						}
@@ -465,11 +473,7 @@ func (s ClientAction) WriteJSON(w io.Writer) error {
 						if err != nil {
 							return err
 						}
-						buf, err = json.Marshal(s)
-						if err != nil {
-							return err
-						}
-						_, err = b.Write(buf)
+						err = s.WriteJSON(b)
 						if err != nil {
 							return err
 						}
@@ -534,11 +538,7 @@ func (s ClientAction) WriteJSON(w io.Writer) error {
 						if err != nil {
 							return err
 						}
-						buf, err = json.Marshal(s)
-						if err != nil {
-							return err
-						}
-						_, err = b.Write(buf)
+						err = s.WriteJSON(b)
 						if err != nil {
 							return err
 						}
@@ -633,11 +633,7 @@ func (s ClientAction) WriteJSON(w io.Writer) error {
 						if err != nil {
 							return err
 						}
-						buf, err = json.Marshal(s)
-						if err != nil {
-							return err
-						}
-						_, err = b.Write(buf)
+						err = s.WriteJSON(b)
 						if err != nil {
 							return err
 						}
@@ -770,11 +766,7 @@ func (s ClientAction) WriteCapLit(w io.Writer) error {
 						if err != nil {
 							return err
 						}
-						buf, err = json.Marshal(s)
-						if err != nil {
-							return err
-						}
-						_, err = b.Write(buf)
+						err = s.WriteCapLit(b)
 						if err != nil {
 							return err
 						}
@@ -858,11 +850,7 @@ func (s ClientAction) WriteCapLit(w io.Writer) error {
 						if err != nil {
 							return err
 						}
-						buf, err = json.Marshal(s)
-						if err != nil {
-							return err
-						}
-						_, err = b.Write(buf)
+						err = s.WriteCapLit(b)
 						if err != nil {
 							return err
 						}
@@ -927,11 +915,7 @@ func (s ClientAction) WriteCapLit(w io.Writer) error {
 						if err != nil {
 							return err
 						}
-						buf, err = json.Marshal(s)
-						if err != nil {
-							return err
-						}
-						_, err = b.Write(buf)
+						err = s.WriteCapLit(b)
 						if err != nil {
 							return err
 						}
@@ -1026,11 +1010,7 @@ func (s ClientAction) WriteCapLit(w io.Writer) error {
 						if err != nil {
 							return err
 						}
-						buf, err = json.Marshal(s)
-						if err != nil {
-							return err
-						}
-						_, err = b.Write(buf)
+						err = s.WriteCapLit(b)
 						if err != nil {
 							return err
 						}
@@ -1536,3 +1516,137 @@ func (s ClientUpdate_List) ToArray() []ClientUpdate {
 	return a
 }
 func (s ClientUpdate_List) Set(i int, item ClientUpdate) { C.PointerList(s).Set(i, C.Object(item)) }
+
+type ClientVarIdPos C.Struct
+
+func NewClientVarIdPos(s *C.Segment) ClientVarIdPos      { return ClientVarIdPos(s.NewStruct(0, 2)) }
+func NewRootClientVarIdPos(s *C.Segment) ClientVarIdPos  { return ClientVarIdPos(s.NewRootStruct(0, 2)) }
+func AutoNewClientVarIdPos(s *C.Segment) ClientVarIdPos  { return ClientVarIdPos(s.NewStructAR(0, 2)) }
+func ReadRootClientVarIdPos(s *C.Segment) ClientVarIdPos { return ClientVarIdPos(s.Root(0).ToStruct()) }
+func (s ClientVarIdPos) VarId() []byte                   { return C.Struct(s).GetObject(0).ToData() }
+func (s ClientVarIdPos) SetVarId(v []byte)               { C.Struct(s).SetObject(0, s.Segment.NewData(v)) }
+func (s ClientVarIdPos) Capability() Capability {
+	return Capability(C.Struct(s).GetObject(1).ToStruct())
+}
+func (s ClientVarIdPos) SetCapability(v Capability) { C.Struct(s).SetObject(1, C.Object(v)) }
+func (s ClientVarIdPos) WriteJSON(w io.Writer) error {
+	b := bufio.NewWriter(w)
+	var err error
+	var buf []byte
+	_ = buf
+	err = b.WriteByte('{')
+	if err != nil {
+		return err
+	}
+	_, err = b.WriteString("\"varId\":")
+	if err != nil {
+		return err
+	}
+	{
+		s := s.VarId()
+		buf, err = json.Marshal(s)
+		if err != nil {
+			return err
+		}
+		_, err = b.Write(buf)
+		if err != nil {
+			return err
+		}
+	}
+	err = b.WriteByte(',')
+	if err != nil {
+		return err
+	}
+	_, err = b.WriteString("\"capability\":")
+	if err != nil {
+		return err
+	}
+	{
+		s := s.Capability()
+		err = s.WriteJSON(b)
+		if err != nil {
+			return err
+		}
+	}
+	err = b.WriteByte('}')
+	if err != nil {
+		return err
+	}
+	err = b.Flush()
+	return err
+}
+func (s ClientVarIdPos) MarshalJSON() ([]byte, error) {
+	b := bytes.Buffer{}
+	err := s.WriteJSON(&b)
+	return b.Bytes(), err
+}
+func (s ClientVarIdPos) WriteCapLit(w io.Writer) error {
+	b := bufio.NewWriter(w)
+	var err error
+	var buf []byte
+	_ = buf
+	err = b.WriteByte('(')
+	if err != nil {
+		return err
+	}
+	_, err = b.WriteString("varId = ")
+	if err != nil {
+		return err
+	}
+	{
+		s := s.VarId()
+		buf, err = json.Marshal(s)
+		if err != nil {
+			return err
+		}
+		_, err = b.Write(buf)
+		if err != nil {
+			return err
+		}
+	}
+	_, err = b.WriteString(", ")
+	if err != nil {
+		return err
+	}
+	_, err = b.WriteString("capability = ")
+	if err != nil {
+		return err
+	}
+	{
+		s := s.Capability()
+		err = s.WriteCapLit(b)
+		if err != nil {
+			return err
+		}
+	}
+	err = b.WriteByte(')')
+	if err != nil {
+		return err
+	}
+	err = b.Flush()
+	return err
+}
+func (s ClientVarIdPos) MarshalCapLit() ([]byte, error) {
+	b := bytes.Buffer{}
+	err := s.WriteCapLit(&b)
+	return b.Bytes(), err
+}
+
+type ClientVarIdPos_List C.PointerList
+
+func NewClientVarIdPosList(s *C.Segment, sz int) ClientVarIdPos_List {
+	return ClientVarIdPos_List(s.NewCompositeList(0, 2, sz))
+}
+func (s ClientVarIdPos_List) Len() int { return C.PointerList(s).Len() }
+func (s ClientVarIdPos_List) At(i int) ClientVarIdPos {
+	return ClientVarIdPos(C.PointerList(s).At(i).ToStruct())
+}
+func (s ClientVarIdPos_List) ToArray() []ClientVarIdPos {
+	n := s.Len()
+	a := make([]ClientVarIdPos, n)
+	for i := 0; i < n; i++ {
+		a[i] = s.At(i)
+	}
+	return a
+}
+func (s ClientVarIdPos_List) Set(i int, item ClientVarIdPos) { C.PointerList(s).Set(i, C.Object(item)) }

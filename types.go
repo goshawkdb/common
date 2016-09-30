@@ -226,36 +226,92 @@ func (rmIds RMIds) NonEmpty() RMIds {
 	return nonEmpty
 }
 
-func EqualCapabilities(a, b *msgs.Capabilities) bool {
-	if a.Value() != b.Value() {
-		return false
-	}
-	aRefs, bRefs := a.References(), b.References()
-	if aRefs.Read().Which() != bRefs.Read().Which() ||
-		aRefs.Write().Which() != bRefs.Write().Which() {
-		return false
-	}
-	if aRefs.Read().Which() == msgs.CAPABILITIESREFERENCESREAD_ONLY {
-		aOnly, bOnly := aRefs.Read().Only().ToArray(), bRefs.Read().Only().ToArray()
-		if len(aOnly) != len(bOnly) {
-			return false
-		}
-		for idx, aIndex := range aOnly {
-			if aIndex != bOnly[idx] {
-				return false
-			}
-		}
-	}
-	if aRefs.Write().Which() == msgs.CAPABILITIESREFERENCESWRITE_ONLY {
-		aOnly, bOnly := aRefs.Write().Only().ToArray(), bRefs.Write().Only().ToArray()
-		if len(aOnly) != len(bOnly) {
-			return false
-		}
-		for idx, aIndex := range aOnly {
-			if aIndex != bOnly[idx] {
-				return false
-			}
-		}
-	}
-	return true
+var MaxCapability *Capability
+
+func init() {
+	seg := capn.NewBuffer(nil)
+	cap := msgs.NewCapability(seg)
+	cap.SetReadWrite()
+	MaxCapability = NewCapability(cap)
 }
+
+type Capability struct {
+	msgs.Capability
+}
+
+func NewCapability(c msgs.Capability) *Capability {
+	return &Capability{Capability: c}
+}
+
+func (a *Capability) Equal(b *Capability) bool {
+	return a == b || a.Which() == b.Which()
+}
+
+func (c *Capability) String() string {
+	switch c.Which() {
+	case msgs.CAPABILITY_READ:
+		return "Read"
+	case msgs.CAPABILITY_WRITE:
+		return "Write"
+	case msgs.CAPABILITY_READWRITE:
+		return "ReadWrite"
+	default:
+		return "None"
+	}
+}
+
+func (a *Capability) Union(b *Capability) *Capability {
+	switch {
+	case a == b:
+		return a
+	case a == MaxCapability || b == MaxCapability:
+		return MaxCapability
+	case a == nil:
+		return b
+	case b == nil:
+		return a
+	}
+
+	aCap := a.Which()
+	bCap := b.Which()
+
+	switch {
+	case aCap == msgs.CAPABILITY_NONE:
+		return b
+	case bCap == msgs.CAPABILITY_NONE:
+		return a
+	case aCap == bCap:
+		return a
+	case aCap == msgs.CAPABILITY_READWRITE || bCap == msgs.CAPABILITY_READWRITE:
+		return MaxCapability
+	}
+
+	read := aCap == msgs.CAPABILITY_READWRITE || aCap == msgs.CAPABILITY_READ ||
+		bCap == msgs.CAPABILITY_READWRITE || bCap == msgs.CAPABILITY_READ
+	write := aCap == msgs.CAPABILITY_READWRITE || aCap == msgs.CAPABILITY_WRITE ||
+		bCap == msgs.CAPABILITY_READWRITE || bCap == msgs.CAPABILITY_WRITE
+
+	if read && write {
+		return MaxCapability
+	}
+
+	seg := capn.NewBuffer(nil)
+	cap := msgs.NewCapability(seg)
+	switch {
+	case read:
+		cap.SetRead()
+	case write:
+		cap.SetWrite()
+	default:
+		cap.SetNone()
+	}
+
+	return NewCapability(cap)
+}
+
+type SortUInt32 []uint32
+
+func (nums SortUInt32) Sort()              { sort.Sort(nums) }
+func (nums SortUInt32) Len() int           { return len(nums) }
+func (nums SortUInt32) Less(i, j int) bool { return nums[i] < nums[j] }
+func (nums SortUInt32) Swap(i, j int)      { nums[i], nums[j] = nums[j], nums[i] }
