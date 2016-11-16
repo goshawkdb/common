@@ -6,7 +6,7 @@ import (
 
 const (
 	DefaultPort          = 7894
-	ProductVersion       = "dev" // protocol version!
+	ProductVersion       = "0.3" // protocol version!
 	ProductName          = "GoshawkDB"
 	HeartbeatInterval    = 2 * time.Second
 	ConnectionBufferSize = 131072
