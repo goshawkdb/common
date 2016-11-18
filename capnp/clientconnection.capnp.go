@@ -204,8 +204,8 @@ func ReadRootHelloClientFromServer(s *C.Segment) HelloClientFromServer {
 }
 func (s HelloClientFromServer) Namespace() []byte     { return C.Struct(s).GetObject(0).ToData() }
 func (s HelloClientFromServer) SetNamespace(v []byte) { C.Struct(s).SetObject(0, s.Segment.NewData(v)) }
-func (s HelloClientFromServer) RootId() []byte        { return C.Struct(s).GetObject(1).ToData() }
-func (s HelloClientFromServer) SetRootId(v []byte)    { C.Struct(s).SetObject(1, s.Segment.NewData(v)) }
+func (s HelloClientFromServer) Roots() Root_List      { return Root_List(C.Struct(s).GetObject(1)) }
+func (s HelloClientFromServer) SetRoots(v Root_List)  { C.Struct(s).SetObject(1, C.Object(v)) }
 func (s HelloClientFromServer) WriteJSON(w io.Writer) error {
 	b := bufio.NewWriter(w)
 	var err error
@@ -234,17 +234,31 @@ func (s HelloClientFromServer) WriteJSON(w io.Writer) error {
 	if err != nil {
 		return err
 	}
-	_, err = b.WriteString("\"rootId\":")
+	_, err = b.WriteString("\"roots\":")
 	if err != nil {
 		return err
 	}
 	{
-		s := s.RootId()
-		buf, err = json.Marshal(s)
-		if err != nil {
-			return err
+		s := s.Roots()
+		{
+			err = b.WriteByte('[')
+			if err != nil {
+				return err
+			}
+			for i, s := range s.ToArray() {
+				if i != 0 {
+					_, err = b.WriteString(", ")
+				}
+				if err != nil {
+					return err
+				}
+				err = s.WriteJSON(b)
+				if err != nil {
+					return err
+				}
+			}
+			err = b.WriteByte(']')
 		}
-		_, err = b.Write(buf)
 		if err != nil {
 			return err
 		}
@@ -289,17 +303,31 @@ func (s HelloClientFromServer) WriteCapLit(w io.Writer) error {
 	if err != nil {
 		return err
 	}
-	_, err = b.WriteString("rootId = ")
+	_, err = b.WriteString("roots = ")
 	if err != nil {
 		return err
 	}
 	{
-		s := s.RootId()
-		buf, err = json.Marshal(s)
-		if err != nil {
-			return err
+		s := s.Roots()
+		{
+			err = b.WriteByte('[')
+			if err != nil {
+				return err
+			}
+			for i, s := range s.ToArray() {
+				if i != 0 {
+					_, err = b.WriteString(", ")
+				}
+				if err != nil {
+					return err
+				}
+				err = s.WriteCapLit(b)
+				if err != nil {
+					return err
+				}
+			}
+			err = b.WriteByte(']')
 		}
-		_, err = b.Write(buf)
 		if err != nil {
 			return err
 		}
@@ -337,6 +365,175 @@ func (s HelloClientFromServer_List) ToArray() []HelloClientFromServer {
 func (s HelloClientFromServer_List) Set(i int, item HelloClientFromServer) {
 	C.PointerList(s).Set(i, C.Object(item))
 }
+
+type Root C.Struct
+
+func NewRoot(s *C.Segment) Root           { return Root(s.NewStruct(0, 3)) }
+func NewRootRoot(s *C.Segment) Root       { return Root(s.NewRootStruct(0, 3)) }
+func AutoNewRoot(s *C.Segment) Root       { return Root(s.NewStructAR(0, 3)) }
+func ReadRootRoot(s *C.Segment) Root      { return Root(s.Root(0).ToStruct()) }
+func (s Root) Name() string               { return C.Struct(s).GetObject(0).ToText() }
+func (s Root) NameBytes() []byte          { return C.Struct(s).GetObject(0).ToDataTrimLastByte() }
+func (s Root) SetName(v string)           { C.Struct(s).SetObject(0, s.Segment.NewText(v)) }
+func (s Root) VarId() []byte              { return C.Struct(s).GetObject(1).ToData() }
+func (s Root) SetVarId(v []byte)          { C.Struct(s).SetObject(1, s.Segment.NewData(v)) }
+func (s Root) Capability() Capability     { return Capability(C.Struct(s).GetObject(2).ToStruct()) }
+func (s Root) SetCapability(v Capability) { C.Struct(s).SetObject(2, C.Object(v)) }
+func (s Root) WriteJSON(w io.Writer) error {
+	b := bufio.NewWriter(w)
+	var err error
+	var buf []byte
+	_ = buf
+	err = b.WriteByte('{')
+	if err != nil {
+		return err
+	}
+	_, err = b.WriteString("\"name\":")
+	if err != nil {
+		return err
+	}
+	{
+		s := s.Name()
+		buf, err = json.Marshal(s)
+		if err != nil {
+			return err
+		}
+		_, err = b.Write(buf)
+		if err != nil {
+			return err
+		}
+	}
+	err = b.WriteByte(',')
+	if err != nil {
+		return err
+	}
+	_, err = b.WriteString("\"varId\":")
+	if err != nil {
+		return err
+	}
+	{
+		s := s.VarId()
+		buf, err = json.Marshal(s)
+		if err != nil {
+			return err
+		}
+		_, err = b.Write(buf)
+		if err != nil {
+			return err
+		}
+	}
+	err = b.WriteByte(',')
+	if err != nil {
+		return err
+	}
+	_, err = b.WriteString("\"capability\":")
+	if err != nil {
+		return err
+	}
+	{
+		s := s.Capability()
+		err = s.WriteJSON(b)
+		if err != nil {
+			return err
+		}
+	}
+	err = b.WriteByte('}')
+	if err != nil {
+		return err
+	}
+	err = b.Flush()
+	return err
+}
+func (s Root) MarshalJSON() ([]byte, error) {
+	b := bytes.Buffer{}
+	err := s.WriteJSON(&b)
+	return b.Bytes(), err
+}
+func (s Root) WriteCapLit(w io.Writer) error {
+	b := bufio.NewWriter(w)
+	var err error
+	var buf []byte
+	_ = buf
+	err = b.WriteByte('(')
+	if err != nil {
+		return err
+	}
+	_, err = b.WriteString("name = ")
+	if err != nil {
+		return err
+	}
+	{
+		s := s.Name()
+		buf, err = json.Marshal(s)
+		if err != nil {
+			return err
+		}
+		_, err = b.Write(buf)
+		if err != nil {
+			return err
+		}
+	}
+	_, err = b.WriteString(", ")
+	if err != nil {
+		return err
+	}
+	_, err = b.WriteString("varId = ")
+	if err != nil {
+		return err
+	}
+	{
+		s := s.VarId()
+		buf, err = json.Marshal(s)
+		if err != nil {
+			return err
+		}
+		_, err = b.Write(buf)
+		if err != nil {
+			return err
+		}
+	}
+	_, err = b.WriteString(", ")
+	if err != nil {
+		return err
+	}
+	_, err = b.WriteString("capability = ")
+	if err != nil {
+		return err
+	}
+	{
+		s := s.Capability()
+		err = s.WriteCapLit(b)
+		if err != nil {
+			return err
+		}
+	}
+	err = b.WriteByte(')')
+	if err != nil {
+		return err
+	}
+	err = b.Flush()
+	return err
+}
+func (s Root) MarshalCapLit() ([]byte, error) {
+	b := bytes.Buffer{}
+	err := s.WriteCapLit(&b)
+	return b.Bytes(), err
+}
+
+type Root_List C.PointerList
+
+func NewRootList(s *C.Segment, sz int) Root_List { return Root_List(s.NewCompositeList(0, 3, sz)) }
+func (s Root_List) Len() int                     { return C.PointerList(s).Len() }
+func (s Root_List) At(i int) Root                { return Root(C.PointerList(s).At(i).ToStruct()) }
+func (s Root_List) ToArray() []Root {
+	n := s.Len()
+	a := make([]Root, n)
+	for i := 0; i < n; i++ {
+		a[i] = s.At(i)
+	}
+	return a
+}
+func (s Root_List) Set(i int, item Root) { C.PointerList(s).Set(i, C.Object(item)) }
 
 type ClientMessage C.Struct
 type ClientMessage_Which uint16
