@@ -170,7 +170,7 @@ func NewClientCertificate(certificate []byte) (*CertificatePrivateKeyPair, error
 	}, nil
 }
 
-func GenerateNodeCertificatePrivateKeyPair(certificate []byte) (*NodeCertificatePrivateKeyPair, error) {
+func GenerateNodeCertificatePrivateKeyPair(certificate []byte, cn string, ou string) (*NodeCertificatePrivateKeyPair, error) {
 	rootCert, rootKey, err := ExtractAndVerifyCertificate(certificate)
 	if err != nil {
 		return nil, err
@@ -195,6 +195,12 @@ func GenerateNodeCertificatePrivateKeyPair(certificate []byte) (*NodeCertificate
 		IsCA:                  false,
 		ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth, x509.ExtKeyUsageClientAuth},
 		KeyUsage:              x509.KeyUsageDigitalSignature,
+	}
+	if len(cn) > 0 {
+		template.Subject.CommonName = cn
+	}
+	if len(ou) > 0 {
+		template.Subject.OrganizationalUnit = []string{ou}
 	}
 
 	certDER, err := x509.CreateCertificate(rand.Reader, &template, rootCert, &privKey.PublicKey, rootKey)
