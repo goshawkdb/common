@@ -89,8 +89,12 @@ func (txnId TxnId) BootCount() uint32 {
 	return binary.BigEndian.Uint32(txnId[12:16])
 }
 
-func (txnId TxnId) RMId() RMId {
-	return RMId(binary.BigEndian.Uint32(txnId[16:20]))
+func (txnId TxnId) RMId(ifEmpty RMId) RMId {
+	if rmId := RMId(binary.BigEndian.Uint32(txnId[16:20])); rmId == RMIdEmpty {
+		return ifEmpty
+	} else {
+		return rmId
+	}
 }
 
 type Cmp int8
