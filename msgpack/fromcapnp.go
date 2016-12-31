@@ -81,6 +81,7 @@ func (a *ClientAction) FromCapnp(msg msgs.ClientAction) *ClientAction {
 	a.Write = nil
 	a.ReadWrite = nil
 	a.Create = nil
+	a.Delete = false
 	switch msg.Which() {
 	case msgs.CLIENTACTION_READ:
 		a.Read = &ClientActionRead{Version: msg.Read().Version()}
@@ -118,6 +119,9 @@ func (a *ClientAction) FromCapnp(msg msgs.ClientAction) *ClientAction {
 		for idx := range a.Create.References {
 			a.Create.References[idx] = (&ClientVarId{}).FromCapnp(refs.At(idx))
 		}
+
+	case msgs.CLIENTACTION_DELETE:
+		a.Delete = true
 
 	default:
 		panic("Unexpected action type")

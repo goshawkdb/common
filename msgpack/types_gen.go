@@ -229,6 +229,11 @@ func (z *ClientAction) DecodeMsg(dc *msgp.Reader) (err error) {
 					return
 				}
 			}
+		case "Delete":
+			z.Delete, err = dc.ReadBool()
+			if err != nil {
+				return
+			}
 		default:
 			err = dc.Skip()
 			if err != nil {
@@ -241,9 +246,9 @@ func (z *ClientAction) DecodeMsg(dc *msgp.Reader) (err error) {
 
 // EncodeMsg implements msgp.Encodable
 func (z *ClientAction) EncodeMsg(en *msgp.Writer) (err error) {
-	// map header, size 5
+	// map header, size 6
 	// write "VarId"
-	err = en.Append(0x85, 0xa5, 0x56, 0x61, 0x72, 0x49, 0x64)
+	err = en.Append(0x86, 0xa5, 0x56, 0x61, 0x72, 0x49, 0x64)
 	if err != nil {
 		return err
 	}
@@ -321,15 +326,24 @@ func (z *ClientAction) EncodeMsg(en *msgp.Writer) (err error) {
 			return
 		}
 	}
+	// write "Delete"
+	err = en.Append(0xa6, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65)
+	if err != nil {
+		return err
+	}
+	err = en.WriteBool(z.Delete)
+	if err != nil {
+		return
+	}
 	return
 }
 
 // MarshalMsg implements msgp.Marshaler
 func (z *ClientAction) MarshalMsg(b []byte) (o []byte, err error) {
 	o = msgp.Require(b, z.Msgsize())
-	// map header, size 5
+	// map header, size 6
 	// string "VarId"
-	o = append(o, 0x85, 0xa5, 0x56, 0x61, 0x72, 0x49, 0x64)
+	o = append(o, 0x86, 0xa5, 0x56, 0x61, 0x72, 0x49, 0x64)
 	o = msgp.AppendBytes(o, z.VarId)
 	// string "Read"
 	o = append(o, 0xa4, 0x52, 0x65, 0x61, 0x64)
@@ -371,6 +385,9 @@ func (z *ClientAction) MarshalMsg(b []byte) (o []byte, err error) {
 			return
 		}
 	}
+	// string "Delete"
+	o = append(o, 0xa6, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65)
+	o = msgp.AppendBool(o, z.Delete)
 	return
 }
 
@@ -479,6 +496,11 @@ func (z *ClientAction) UnmarshalMsg(bts []byte) (o []byte, err error) {
 					return
 				}
 			}
+		case "Delete":
+			z.Delete, bts, err = msgp.ReadBoolBytes(bts)
+			if err != nil {
+				return
+			}
 		default:
 			bts, err = msgp.Skip(bts)
 			if err != nil {
@@ -516,6 +538,7 @@ func (z *ClientAction) Msgsize() (s int) {
 	} else {
 		s += z.Create.Msgsize()
 	}
+	s += 7 + msgp.BoolSize
 	return
 }
 
@@ -562,9 +585,70 @@ func (z *ClientActionCreate) DecodeMsg(dc *msgp.Reader) (err error) {
 					if z.References[zhct] == nil {
 						z.References[zhct] = new(ClientVarId)
 					}
-					err = z.References[zhct].DecodeMsg(dc)
+					var zlqf uint32
+					zlqf, err = dc.ReadMapHeader()
 					if err != nil {
 						return
+					}
+					for zlqf > 0 {
+						zlqf--
+						field, err = dc.ReadMapKeyPtr()
+						if err != nil {
+							return
+						}
+						switch msgp.UnsafeString(field) {
+						case "VarId":
+							z.References[zhct].VarId, err = dc.ReadBytes(z.References[zhct].VarId)
+							if err != nil {
+								return
+							}
+						case "Capability":
+							if dc.IsNil() {
+								err = dc.ReadNil()
+								if err != nil {
+									return
+								}
+								z.References[zhct].Capability = nil
+							} else {
+								if z.References[zhct].Capability == nil {
+									z.References[zhct].Capability = new(Capability)
+								}
+								var zdaf uint32
+								zdaf, err = dc.ReadMapHeader()
+								if err != nil {
+									return
+								}
+								for zdaf > 0 {
+									zdaf--
+									field, err = dc.ReadMapKeyPtr()
+									if err != nil {
+										return
+									}
+									switch msgp.UnsafeString(field) {
+									case "Read":
+										z.References[zhct].Capability.Read, err = dc.ReadBool()
+										if err != nil {
+											return
+										}
+									case "Write":
+										z.References[zhct].Capability.Write, err = dc.ReadBool()
+										if err != nil {
+											return
+										}
+									default:
+										err = dc.Skip()
+										if err != nil {
+											return
+										}
+									}
+								}
+							}
+						default:
+							err = dc.Skip()
+							if err != nil {
+								return
+							}
+						}
 					}
 				}
 			}
@@ -606,9 +690,46 @@ func (z *ClientActionCreate) EncodeMsg(en *msgp.Writer) (err error) {
 				return
 			}
 		} else {
-			err = z.References[zhct].EncodeMsg(en)
+			// map header, size 2
+			// write "VarId"
+			err = en.Append(0x82, 0xa5, 0x56, 0x61, 0x72, 0x49, 0x64)
+			if err != nil {
+				return err
+			}
+			err = en.WriteBytes(z.References[zhct].VarId)
 			if err != nil {
 				return
+			}
+			// write "Capability"
+			err = en.Append(0xaa, 0x43, 0x61, 0x70, 0x61, 0x62, 0x69, 0x6c, 0x69, 0x74, 0x79)
+			if err != nil {
+				return err
+			}
+			if z.References[zhct].Capability == nil {
+				err = en.WriteNil()
+				if err != nil {
+					return
+				}
+			} else {
+				// map header, size 2
+				// write "Read"
+				err = en.Append(0x82, 0xa4, 0x52, 0x65, 0x61, 0x64)
+				if err != nil {
+					return err
+				}
+				err = en.WriteBool(z.References[zhct].Capability.Read)
+				if err != nil {
+					return
+				}
+				// write "Write"
+				err = en.Append(0xa5, 0x57, 0x72, 0x69, 0x74, 0x65)
+				if err != nil {
+					return err
+				}
+				err = en.WriteBool(z.References[zhct].Capability.Write)
+				if err != nil {
+					return
+				}
 			}
 		}
 	}
@@ -629,9 +750,22 @@ func (z *ClientActionCreate) MarshalMsg(b []byte) (o []byte, err error) {
 		if z.References[zhct] == nil {
 			o = msgp.AppendNil(o)
 		} else {
-			o, err = z.References[zhct].MarshalMsg(o)
-			if err != nil {
-				return
+			// map header, size 2
+			// string "VarId"
+			o = append(o, 0x82, 0xa5, 0x56, 0x61, 0x72, 0x49, 0x64)
+			o = msgp.AppendBytes(o, z.References[zhct].VarId)
+			// string "Capability"
+			o = append(o, 0xaa, 0x43, 0x61, 0x70, 0x61, 0x62, 0x69, 0x6c, 0x69, 0x74, 0x79)
+			if z.References[zhct].Capability == nil {
+				o = msgp.AppendNil(o)
+			} else {
+				// map header, size 2
+				// string "Read"
+				o = append(o, 0x82, 0xa4, 0x52, 0x65, 0x61, 0x64)
+				o = msgp.AppendBool(o, z.References[zhct].Capability.Read)
+				// string "Write"
+				o = append(o, 0xa5, 0x57, 0x72, 0x69, 0x74, 0x65)
+				o = msgp.AppendBool(o, z.References[zhct].Capability.Write)
 			}
 		}
 	}
@@ -642,13 +776,13 @@ func (z *ClientActionCreate) MarshalMsg(b []byte) (o []byte, err error) {
 func (z *ClientActionCreate) UnmarshalMsg(bts []byte) (o []byte, err error) {
 	var field []byte
 	_ = field
-	var zlqf uint32
-	zlqf, bts, err = msgp.ReadMapHeaderBytes(bts)
+	var zpks uint32
+	zpks, bts, err = msgp.ReadMapHeaderBytes(bts)
 	if err != nil {
 		return
 	}
-	for zlqf > 0 {
-		zlqf--
+	for zpks > 0 {
+		zpks--
 		field, bts, err = msgp.ReadMapKeyZC(bts)
 		if err != nil {
 			return
@@ -660,15 +794,15 @@ func (z *ClientActionCreate) UnmarshalMsg(bts []byte) (o []byte, err error) {
 				return
 			}
 		case "References":
-			var zdaf uint32
-			zdaf, bts, err = msgp.ReadArrayHeaderBytes(bts)
+			var zjfb uint32
+			zjfb, bts, err = msgp.ReadArrayHeaderBytes(bts)
 			if err != nil {
 				return
 			}
-			if cap(z.References) >= int(zdaf) {
-				z.References = (z.References)[:zdaf]
+			if cap(z.References) >= int(zjfb) {
+				z.References = (z.References)[:zjfb]
 			} else {
-				z.References = make([]*ClientVarId, zdaf)
+				z.References = make([]*ClientVarId, zjfb)
 			}
 			for zhct := range z.References {
 				if msgp.IsNil(bts) {
@@ -681,9 +815,70 @@ func (z *ClientActionCreate) UnmarshalMsg(bts []byte) (o []byte, err error) {
 					if z.References[zhct] == nil {
 						z.References[zhct] = new(ClientVarId)
 					}
-					bts, err = z.References[zhct].UnmarshalMsg(bts)
+					var zcxo uint32
+					zcxo, bts, err = msgp.ReadMapHeaderBytes(bts)
 					if err != nil {
 						return
+					}
+					for zcxo > 0 {
+						zcxo--
+						field, bts, err = msgp.ReadMapKeyZC(bts)
+						if err != nil {
+							return
+						}
+						switch msgp.UnsafeString(field) {
+						case "VarId":
+							z.References[zhct].VarId, bts, err = msgp.ReadBytesBytes(bts, z.References[zhct].VarId)
+							if err != nil {
+								return
+							}
+						case "Capability":
+							if msgp.IsNil(bts) {
+								bts, err = msgp.ReadNilBytes(bts)
+								if err != nil {
+									return
+								}
+								z.References[zhct].Capability = nil
+							} else {
+								if z.References[zhct].Capability == nil {
+									z.References[zhct].Capability = new(Capability)
+								}
+								var zeff uint32
+								zeff, bts, err = msgp.ReadMapHeaderBytes(bts)
+								if err != nil {
+									return
+								}
+								for zeff > 0 {
+									zeff--
+									field, bts, err = msgp.ReadMapKeyZC(bts)
+									if err != nil {
+										return
+									}
+									switch msgp.UnsafeString(field) {
+									case "Read":
+										z.References[zhct].Capability.Read, bts, err = msgp.ReadBoolBytes(bts)
+										if err != nil {
+											return
+										}
+									case "Write":
+										z.References[zhct].Capability.Write, bts, err = msgp.ReadBoolBytes(bts)
+										if err != nil {
+											return
+										}
+									default:
+										bts, err = msgp.Skip(bts)
+										if err != nil {
+											return
+										}
+									}
+								}
+							}
+						default:
+							bts, err = msgp.Skip(bts)
+							if err != nil {
+								return
+							}
+						}
 					}
 				}
 			}
@@ -705,7 +900,12 @@ func (z *ClientActionCreate) Msgsize() (s int) {
 		if z.References[zhct] == nil {
 			s += msgp.NilSize
 		} else {
-			s += z.References[zhct].Msgsize()
+			s += 1 + 6 + msgp.BytesPrefixSize + len(z.References[zhct].VarId) + 11
+			if z.References[zhct].Capability == nil {
+				s += msgp.NilSize
+			} else {
+				s += 1 + 5 + msgp.BoolSize + 6 + msgp.BoolSize
+			}
 		}
 	}
 	return
@@ -715,13 +915,13 @@ func (z *ClientActionCreate) Msgsize() (s int) {
 func (z *ClientActionRead) DecodeMsg(dc *msgp.Reader) (err error) {
 	var field []byte
 	_ = field
-	var zpks uint32
-	zpks, err = dc.ReadMapHeader()
+	var zrsw uint32
+	zrsw, err = dc.ReadMapHeader()
 	if err != nil {
 		return
 	}
-	for zpks > 0 {
-		zpks--
+	for zrsw > 0 {
+		zrsw--
 		field, err = dc.ReadMapKeyPtr()
 		if err != nil {
 			return
@@ -771,13 +971,13 @@ func (z *ClientActionRead) MarshalMsg(b []byte) (o []byte, err error) {
 func (z *ClientActionRead) UnmarshalMsg(bts []byte) (o []byte, err error) {
 	var field []byte
 	_ = field
-	var zjfb uint32
-	zjfb, bts, err = msgp.ReadMapHeaderBytes(bts)
+	var zxpk uint32
+	zxpk, bts, err = msgp.ReadMapHeaderBytes(bts)
 	if err != nil {
 		return
 	}
-	for zjfb > 0 {
-		zjfb--
+	for zxpk > 0 {
+		zxpk--
 		field, bts, err = msgp.ReadMapKeyZC(bts)
 		if err != nil {
 			return
@@ -809,13 +1009,13 @@ func (z *ClientActionRead) Msgsize() (s int) {
 func (z *ClientActionReadWrite) DecodeMsg(dc *msgp.Reader) (err error) {
 	var field []byte
 	_ = field
-	var zeff uint32
-	zeff, err = dc.ReadMapHeader()
+	var zobc uint32
+	zobc, err = dc.ReadMapHeader()
 	if err != nil {
 		return
 	}
-	for zeff > 0 {
-		zeff--
+	for zobc > 0 {
+		zobc--
 		field, err = dc.ReadMapKeyPtr()
 		if err != nil {
 			return
@@ -832,28 +1032,28 @@ func (z *ClientActionReadWrite) DecodeMsg(dc *msgp.Reader) (err error) {
 				return
 			}
 		case "References":
-			var zrsw uint32
-			zrsw, err = dc.ReadArrayHeader()
+			var zsnv uint32
+			zsnv, err = dc.ReadArrayHeader()
 			if err != nil {
 				return
 			}
-			if cap(z.References) >= int(zrsw) {
-				z.References = (z.References)[:zrsw]
+			if cap(z.References) >= int(zsnv) {
+				z.References = (z.References)[:zsnv]
 			} else {
-				z.References = make([]*ClientVarId, zrsw)
+				z.References = make([]*ClientVarId, zsnv)
 			}
-			for zcxo := range z.References {
+			for zdnj := range z.References {
 				if dc.IsNil() {
 					err = dc.ReadNil()
 					if err != nil {
 						return
 					}
-					z.References[zcxo] = nil
+					z.References[zdnj] = nil
 				} else {
-					if z.References[zcxo] == nil {
-						z.References[zcxo] = new(ClientVarId)
+					if z.References[zdnj] == nil {
+						z.References[zdnj] = new(ClientVarId)
 					}
-					err = z.References[zcxo].DecodeMsg(dc)
+					err = z.References[zdnj].DecodeMsg(dc)
 					if err != nil {
 						return
 					}
@@ -899,14 +1099,14 @@ func (z *ClientActionReadWrite) EncodeMsg(en *msgp.Writer) (err error) {
 	if err != nil {
 		return
 	}
-	for zcxo := range z.References {
-		if z.References[zcxo] == nil {
+	for zdnj := range z.References {
+		if z.References[zdnj] == nil {
 			err = en.WriteNil()
 			if err != nil {
 				return
 			}
 		} else {
-			err = z.References[zcxo].EncodeMsg(en)
+			err = z.References[zdnj].EncodeMsg(en)
 			if err != nil {
 				return
 			}
@@ -928,11 +1128,11 @@ func (z *ClientActionReadWrite) MarshalMsg(b []byte) (o []byte, err error) {
 	// string "References"
 	o = append(o, 0xaa, 0x52, 0x65, 0x66, 0x65, 0x72, 0x65, 0x6e, 0x63, 0x65, 0x73)
 	o = msgp.AppendArrayHeader(o, uint32(len(z.References)))
-	for zcxo := range z.References {
-		if z.References[zcxo] == nil {
+	for zdnj := range z.References {
+		if z.References[zdnj] == nil {
 			o = msgp.AppendNil(o)
 		} else {
-			o, err = z.References[zcxo].MarshalMsg(o)
+			o, err = z.References[zdnj].MarshalMsg(o)
 			if err != nil {
 				return
 			}
@@ -945,13 +1145,13 @@ func (z *ClientActionReadWrite) MarshalMsg(b []byte) (o []byte, err error) {
 func (z *ClientActionReadWrite) UnmarshalMsg(bts []byte) (o []byte, err error) {
 	var field []byte
 	_ = field
-	var zxpk uint32
-	zxpk, bts, err = msgp.ReadMapHeaderBytes(bts)
+	var zkgt uint32
+	zkgt, bts, err = msgp.ReadMapHeaderBytes(bts)
 	if err != nil {
 		return
 	}
-	for zxpk > 0 {
-		zxpk--
+	for zkgt > 0 {
+		zkgt--
 		field, bts, err = msgp.ReadMapKeyZC(bts)
 		if err != nil {
 			return
@@ -968,28 +1168,28 @@ func (z *ClientActionReadWrite) UnmarshalMsg(bts []byte) (o []byte, err error) {
 				return
 			}
 		case "References":
-			var zdnj uint32
-			zdnj, bts, err = msgp.ReadArrayHeaderBytes(bts)
+			var zema uint32
+			zema, bts, err = msgp.ReadArrayHeaderBytes(bts)
 			if err != nil {
 				return
 			}
-			if cap(z.References) >= int(zdnj) {
-				z.References = (z.References)[:zdnj]
+			if cap(z.References) >= int(zema) {
+				z.References = (z.References)[:zema]
 			} else {
-				z.References = make([]*ClientVarId, zdnj)
+				z.References = make([]*ClientVarId, zema)
 			}
-			for zcxo := range z.References {
+			for zdnj := range z.References {
 				if msgp.IsNil(bts) {
 					bts, err = msgp.ReadNilBytes(bts)
 					if err != nil {
 						return
 					}
-					z.References[zcxo] = nil
+					z.References[zdnj] = nil
 				} else {
-					if z.References[zcxo] == nil {
-						z.References[zcxo] = new(ClientVarId)
+					if z.References[zdnj] == nil {
+						z.References[zdnj] = new(ClientVarId)
 					}
-					bts, err = z.References[zcxo].UnmarshalMsg(bts)
+					bts, err = z.References[zdnj].UnmarshalMsg(bts)
 					if err != nil {
 						return
 					}
@@ -1009,11 +1209,11 @@ func (z *ClientActionReadWrite) UnmarshalMsg(bts []byte) (o []byte, err error) {
 // Msgsize returns an upper bound estimate of the number of bytes occupied by the serialized message
 func (z *ClientActionReadWrite) Msgsize() (s int) {
 	s = 1 + 8 + msgp.BytesPrefixSize + len(z.Version) + 6 + msgp.BytesPrefixSize + len(z.Value) + 11 + msgp.ArrayHeaderSize
-	for zcxo := range z.References {
-		if z.References[zcxo] == nil {
+	for zdnj := range z.References {
+		if z.References[zdnj] == nil {
 			s += msgp.NilSize
 		} else {
-			s += z.References[zcxo].Msgsize()
+			s += z.References[zdnj].Msgsize()
 		}
 	}
 	return
@@ -1023,13 +1223,13 @@ func (z *ClientActionReadWrite) Msgsize() (s int) {
 func (z *ClientActionWrite) DecodeMsg(dc *msgp.Reader) (err error) {
 	var field []byte
 	_ = field
-	var zsnv uint32
-	zsnv, err = dc.ReadMapHeader()
+	var zqke uint32
+	zqke, err = dc.ReadMapHeader()
 	if err != nil {
 		return
 	}
-	for zsnv > 0 {
-		zsnv--
+	for zqke > 0 {
+		zqke--
 		field, err = dc.ReadMapKeyPtr()
 		if err != nil {
 			return
@@ -1041,91 +1241,30 @@ func (z *ClientActionWrite) DecodeMsg(dc *msgp.Reader) (err error) {
 				return
 			}
 		case "References":
-			var zkgt uint32
-			zkgt, err = dc.ReadArrayHeader()
+			var zqyh uint32
+			zqyh, err = dc.ReadArrayHeader()
 			if err != nil {
 				return
 			}
-			if cap(z.References) >= int(zkgt) {
-				z.References = (z.References)[:zkgt]
+			if cap(z.References) >= int(zqyh) {
+				z.References = (z.References)[:zqyh]
 			} else {
-				z.References = make([]*ClientVarId, zkgt)
+				z.References = make([]*ClientVarId, zqyh)
 			}
-			for zobc := range z.References {
+			for zpez := range z.References {
 				if dc.IsNil() {
 					err = dc.ReadNil()
 					if err != nil {
 						return
 					}
-					z.References[zobc] = nil
+					z.References[zpez] = nil
 				} else {
-					if z.References[zobc] == nil {
-						z.References[zobc] = new(ClientVarId)
+					if z.References[zpez] == nil {
+						z.References[zpez] = new(ClientVarId)
 					}
-					var zema uint32
-					zema, err = dc.ReadMapHeader()
+					err = z.References[zpez].DecodeMsg(dc)
 					if err != nil {
 						return
-					}
-					for zema > 0 {
-						zema--
-						field, err = dc.ReadMapKeyPtr()
-						if err != nil {
-							return
-						}
-						switch msgp.UnsafeString(field) {
-						case "VarId":
-							z.References[zobc].VarId, err = dc.ReadBytes(z.References[zobc].VarId)
-							if err != nil {
-								return
-							}
-						case "Capability":
-							if dc.IsNil() {
-								err = dc.ReadNil()
-								if err != nil {
-									return
-								}
-								z.References[zobc].Capability = nil
-							} else {
-								if z.References[zobc].Capability == nil {
-									z.References[zobc].Capability = new(Capability)
-								}
-								var zpez uint32
-								zpez, err = dc.ReadMapHeader()
-								if err != nil {
-									return
-								}
-								for zpez > 0 {
-									zpez--
-									field, err = dc.ReadMapKeyPtr()
-									if err != nil {
-										return
-									}
-									switch msgp.UnsafeString(field) {
-									case "Read":
-										z.References[zobc].Capability.Read, err = dc.ReadBool()
-										if err != nil {
-											return
-										}
-									case "Write":
-										z.References[zobc].Capability.Write, err = dc.ReadBool()
-										if err != nil {
-											return
-										}
-									default:
-										err = dc.Skip()
-										if err != nil {
-											return
-										}
-									}
-								}
-							}
-						default:
-							err = dc.Skip()
-							if err != nil {
-								return
-							}
-						}
 					}
 				}
 			}
@@ -1160,53 +1299,16 @@ func (z *ClientActionWrite) EncodeMsg(en *msgp.Writer) (err error) {
 	if err != nil {
 		return
 	}
-	for zobc := range z.References {
-		if z.References[zobc] == nil {
+	for zpez := range z.References {
+		if z.References[zpez] == nil {
 			err = en.WriteNil()
 			if err != nil {
 				return
 			}
 		} else {
-			// map header, size 2
-			// write "VarId"
-			err = en.Append(0x82, 0xa5, 0x56, 0x61, 0x72, 0x49, 0x64)
-			if err != nil {
-				return err
-			}
-			err = en.WriteBytes(z.References[zobc].VarId)
+			err = z.References[zpez].EncodeMsg(en)
 			if err != nil {
 				return
-			}
-			// write "Capability"
-			err = en.Append(0xaa, 0x43, 0x61, 0x70, 0x61, 0x62, 0x69, 0x6c, 0x69, 0x74, 0x79)
-			if err != nil {
-				return err
-			}
-			if z.References[zobc].Capability == nil {
-				err = en.WriteNil()
-				if err != nil {
-					return
-				}
-			} else {
-				// map header, size 2
-				// write "Read"
-				err = en.Append(0x82, 0xa4, 0x52, 0x65, 0x61, 0x64)
-				if err != nil {
-					return err
-				}
-				err = en.WriteBool(z.References[zobc].Capability.Read)
-				if err != nil {
-					return
-				}
-				// write "Write"
-				err = en.Append(0xa5, 0x57, 0x72, 0x69, 0x74, 0x65)
-				if err != nil {
-					return err
-				}
-				err = en.WriteBool(z.References[zobc].Capability.Write)
-				if err != nil {
-					return
-				}
 			}
 		}
 	}
@@ -1223,26 +1325,13 @@ func (z *ClientActionWrite) MarshalMsg(b []byte) (o []byte, err error) {
 	// string "References"
 	o = append(o, 0xaa, 0x52, 0x65, 0x66, 0x65, 0x72, 0x65, 0x6e, 0x63, 0x65, 0x73)
 	o = msgp.AppendArrayHeader(o, uint32(len(z.References)))
-	for zobc := range z.References {
-		if z.References[zobc] == nil {
+	for zpez := range z.References {
+		if z.References[zpez] == nil {
 			o = msgp.AppendNil(o)
 		} else {
-			// map header, size 2
-			// string "VarId"
-			o = append(o, 0x82, 0xa5, 0x56, 0x61, 0x72, 0x49, 0x64)
-			o = msgp.AppendBytes(o, z.References[zobc].VarId)
-			// string "Capability"
-			o = append(o, 0xaa, 0x43, 0x61, 0x70, 0x61, 0x62, 0x69, 0x6c, 0x69, 0x74, 0x79)
-			if z.References[zobc].Capability == nil {
-				o = msgp.AppendNil(o)
-			} else {
-				// map header, size 2
-				// string "Read"
-				o = append(o, 0x82, 0xa4, 0x52, 0x65, 0x61, 0x64)
-				o = msgp.AppendBool(o, z.References[zobc].Capability.Read)
-				// string "Write"
-				o = append(o, 0xa5, 0x57, 0x72, 0x69, 0x74, 0x65)
-				o = msgp.AppendBool(o, z.References[zobc].Capability.Write)
+			o, err = z.References[zpez].MarshalMsg(o)
+			if err != nil {
+				return
 			}
 		}
 	}
@@ -1253,13 +1342,13 @@ func (z *ClientActionWrite) MarshalMsg(b []byte) (o []byte, err error) {
 func (z *ClientActionWrite) UnmarshalMsg(bts []byte) (o []byte, err error) {
 	var field []byte
 	_ = field
-	var zqke uint32
-	zqke, bts, err = msgp.ReadMapHeaderBytes(bts)
+	var zyzr uint32
+	zyzr, bts, err = msgp.ReadMapHeaderBytes(bts)
 	if err != nil {
 		return
 	}
-	for zqke > 0 {
-		zqke--
+	for zyzr > 0 {
+		zyzr--
 		field, bts, err = msgp.ReadMapKeyZC(bts)
 		if err != nil {
 			return
@@ -1271,91 +1360,30 @@ func (z *ClientActionWrite) UnmarshalMsg(bts []byte) (o []byte, err error) {
 				return
 			}
 		case "References":
-			var zqyh uint32
-			zqyh, bts, err = msgp.ReadArrayHeaderBytes(bts)
+			var zywj uint32
+			zywj, bts, err = msgp.ReadArrayHeaderBytes(bts)
 			if err != nil {
 				return
 			}
-			if cap(z.References) >= int(zqyh) {
-				z.References = (z.References)[:zqyh]
+			if cap(z.References) >= int(zywj) {
+				z.References = (z.References)[:zywj]
 			} else {
-				z.References = make([]*ClientVarId, zqyh)
+				z.References = make([]*ClientVarId, zywj)
 			}
-			for zobc := range z.References {
+			for zpez := range z.References {
 				if msgp.IsNil(bts) {
 					bts, err = msgp.ReadNilBytes(bts)
 					if err != nil {
 						return
 					}
-					z.References[zobc] = nil
+					z.References[zpez] = nil
 				} else {
-					if z.References[zobc] == nil {
-						z.References[zobc] = new(ClientVarId)
+					if z.References[zpez] == nil {
+						z.References[zpez] = new(ClientVarId)
 					}
-					var zyzr uint32
-					zyzr, bts, err = msgp.ReadMapHeaderBytes(bts)
+					bts, err = z.References[zpez].UnmarshalMsg(bts)
 					if err != nil {
 						return
-					}
-					for zyzr > 0 {
-						zyzr--
-						field, bts, err = msgp.ReadMapKeyZC(bts)
-						if err != nil {
-							return
-						}
-						switch msgp.UnsafeString(field) {
-						case "VarId":
-							z.References[zobc].VarId, bts, err = msgp.ReadBytesBytes(bts, z.References[zobc].VarId)
-							if err != nil {
-								return
-							}
-						case "Capability":
-							if msgp.IsNil(bts) {
-								bts, err = msgp.ReadNilBytes(bts)
-								if err != nil {
-									return
-								}
-								z.References[zobc].Capability = nil
-							} else {
-								if z.References[zobc].Capability == nil {
-									z.References[zobc].Capability = new(Capability)
-								}
-								var zywj uint32
-								zywj, bts, err = msgp.ReadMapHeaderBytes(bts)
-								if err != nil {
-									return
-								}
-								for zywj > 0 {
-									zywj--
-									field, bts, err = msgp.ReadMapKeyZC(bts)
-									if err != nil {
-										return
-									}
-									switch msgp.UnsafeString(field) {
-									case "Read":
-										z.References[zobc].Capability.Read, bts, err = msgp.ReadBoolBytes(bts)
-										if err != nil {
-											return
-										}
-									case "Write":
-										z.References[zobc].Capability.Write, bts, err = msgp.ReadBoolBytes(bts)
-										if err != nil {
-											return
-										}
-									default:
-										bts, err = msgp.Skip(bts)
-										if err != nil {
-											return
-										}
-									}
-								}
-							}
-						default:
-							bts, err = msgp.Skip(bts)
-							if err != nil {
-								return
-							}
-						}
 					}
 				}
 			}
@@ -1373,16 +1401,11 @@ func (z *ClientActionWrite) UnmarshalMsg(bts []byte) (o []byte, err error) {
 // Msgsize returns an upper bound estimate of the number of bytes occupied by the serialized message
 func (z *ClientActionWrite) Msgsize() (s int) {
 	s = 1 + 6 + msgp.BytesPrefixSize + len(z.Value) + 11 + msgp.ArrayHeaderSize
-	for zobc := range z.References {
-		if z.References[zobc] == nil {
+	for zpez := range z.References {
+		if z.References[zpez] == nil {
 			s += msgp.NilSize
 		} else {
-			s += 1 + 6 + msgp.BytesPrefixSize + len(z.References[zobc].VarId) + 11
-			if z.References[zobc].Capability == nil {
-				s += msgp.NilSize
-			} else {
-				s += 1 + 5 + msgp.BoolSize + 6 + msgp.BoolSize
-			}
+			s += z.References[zpez].Msgsize()
 		}
 	}
 	return
