@@ -50,8 +50,10 @@ type ClientTxn struct {
 	// HelloClientFromServer. The number that is encoded into the first
 	// 8 bytes should start from 0, and always increase. See also
 	// FinalId below.
-	Id      []byte
-	Retry   bool // True iff this is a Retry txn
+	Id []byte
+	// True iff this is a Retry txn. For Retry transactions, all
+	// ClientActions must be Reads.
+	Retry   bool
 	Actions []*ClientAction
 }
 
