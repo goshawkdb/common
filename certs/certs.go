@@ -96,8 +96,8 @@ func NewClusterCertificate() (*CertificatePrivateKeyPair, error) {
 
 func parseCertificate(certPEM []byte) (*x509.Certificate, []byte, error) {
 	certBlock, rest := pem.Decode([]byte(certPEM))
-	if certBlock.Type != "CERTIFICATE" {
-		return nil, nil, errors.New("didn't find expected certificate in PEM data")
+	if certBlock == nil || certBlock.Type != "CERTIFICATE" {
+		return nil, nil, errors.New("Didn't find expected Certificate in PEM data")
 	}
 
 	cert, err := x509.ParseCertificate(certBlock.Bytes)
@@ -115,8 +115,8 @@ func parseCertificatePrivate(certificate []byte) (*x509.Certificate, *ecdsa.Priv
 	}
 
 	privBlock, _ := pem.Decode(rest)
-	if privBlock.Type != "EC PRIVATE KEY" {
-		return nil, nil, errors.New("didn't find expected private key in PEM data")
+	if privBlock == nil || privBlock.Type != "EC PRIVATE KEY" {
+		return nil, nil, errors.New("Didn't find expected EC Private Key in PEM data")
 	}
 
 	privKey, err := x509.ParseECPrivateKey(privBlock.Bytes)
