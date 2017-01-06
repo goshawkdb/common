@@ -39,7 +39,7 @@ func (a *ClientAction) SetCapnp(seg *capn.Segment, msg msgs.ClientAction) {
 
 	case a.ReadWrite != nil:
 		rw := a.ReadWrite
-		msg.SetWrite()
+		msg.SetReadwrite()
 		rwMsg := msg.Readwrite()
 		rwMsg.SetVersion(rw.Version)
 		rwMsg.SetValue(rw.Value)
