@@ -21,5 +21,8 @@ func ConfigureSocket(socket *net.TCPConn) error {
 	if err := socket.SetWriteBuffer(ConnectionBufferSize); err != nil {
 		return err
 	}
+	if err := socket.SetNoDelay(true); err != nil {
+		return err
+	}
 	return nil
 }
