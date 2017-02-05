@@ -10,6 +10,7 @@ import (
 	"encoding/pem"
 	"errors"
 	"math/big"
+	"net"
 	"time"
 )
 
@@ -170,7 +171,7 @@ func NewClientCertificate(certificate []byte) (*CertificatePrivateKeyPair, error
 	}, nil
 }
 
-func GenerateNodeCertificatePrivateKeyPair(certificate []byte, cn string, ou string) (*NodeCertificatePrivateKeyPair, error) {
+func GenerateNodeCertificatePrivateKeyPair(certificate []byte, host string, ip net.IP, ou string) (*NodeCertificatePrivateKeyPair, error) {
 	rootCert, rootKey, err := ExtractAndVerifyCertificate(certificate)
 	if err != nil {
 		return nil, err
@@ -196,8 +197,11 @@ func GenerateNodeCertificatePrivateKeyPair(certificate []byte, cn string, ou str
 		ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth, x509.ExtKeyUsageClientAuth},
 		KeyUsage:              x509.KeyUsageDigitalSignature,
 	}
-	if len(cn) > 0 {
-		template.Subject.CommonName = cn
+	if len(host) > 0 {
+		template.DNSNames = []string{host}
+	}
+	if ip != nil {
+		template.IPAddresses = []net.IP{ip}
 	}
 	if len(ou) > 0 {
 		template.Subject.OrganizationalUnit = []string{ou}
