@@ -10,7 +10,7 @@ const (
 	ProductVersion       = "dev" // protocol version!
 	ProductName          = "GoshawkDB"
 	HeartbeatInterval    = 2 * time.Second
-	ConnectionBufferSize = 1048576
+	ConnectionBufferSize = 131072
 )
 
 var (
