@@ -290,10 +290,8 @@ func (a *Capability) Union(b *Capability) *Capability {
 		return MaxCapability
 	}
 
-	read := aCap == msgs.CAPABILITY_READWRITE || aCap == msgs.CAPABILITY_READ ||
-		bCap == msgs.CAPABILITY_READWRITE || bCap == msgs.CAPABILITY_READ
-	write := aCap == msgs.CAPABILITY_READWRITE || aCap == msgs.CAPABILITY_WRITE ||
-		bCap == msgs.CAPABILITY_READWRITE || bCap == msgs.CAPABILITY_WRITE
+	read := aCap == msgs.CAPABILITY_READ || bCap == msgs.CAPABILITY_READ
+	write := aCap == msgs.CAPABILITY_WRITE || bCap == msgs.CAPABILITY_WRITE
 
 	if read && write {
 		return MaxCapability
@@ -307,7 +305,7 @@ func (a *Capability) Union(b *Capability) *Capability {
 	case write:
 		cap.SetWrite()
 	default:
-		cap.SetNone()
+		panic("Internal logic failure - the 'impossible' happened.")
 	}
 
 	return NewCapability(cap)
