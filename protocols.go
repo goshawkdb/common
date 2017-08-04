@@ -247,7 +247,7 @@ func (b *TLSCapnpBeater) tick() {
 		case <-b.terminate:
 			return
 		case <-b.ticker.C:
-			if !b.conn.EnqueueError(b.beat) {
+			if !b.conn.EnqueueFuncError(b.beat) {
 				return
 			}
 		}
@@ -326,7 +326,7 @@ func (sr *SocketReader) read() {
 			return
 		default:
 			if err := sr.ReadAndHandleOneMsg(); err != nil {
-				sr.conn.EnqueueError(func() error { return err }) // connectionReadError{error: err})
+				sr.conn.EnqueueFuncError(func() error { return err }) // connectionReadError{error: err})
 				return
 			}
 		}
@@ -334,5 +334,5 @@ func (sr *SocketReader) read() {
 }
 
 type ConnectionActor interface {
-	EnqueueError(func() error) bool
+	EnqueueFuncError(func() error) bool
 }
