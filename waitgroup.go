@@ -1,7 +1,6 @@
 package common
 
 import (
-	"fmt"
 	"sync/atomic"
 )
 
@@ -42,7 +41,6 @@ func (cmg *ChannelWaitGroup) Add(delta uint64) {
 }
 
 func (cmg *ChannelWaitGroup) WaitUntilEither(other <-chan struct{}) {
-	fmt.Println("WaitUntilEither", cmg, cmg.WaitChan, other)
 	select {
 	case <-cmg.WaitChan:
 	case <-other:

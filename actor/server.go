@@ -33,8 +33,7 @@ type BasicServerOuter struct {
 }
 
 type BasicServerInner struct {
-	Mailbox *Mailbox
-	Logger  log.Logger
+	Logger log.Logger
 }
 
 type MsgShutdown struct{}
@@ -67,8 +66,7 @@ func (outer *BasicServerOuter) EnqueueFuncAsync(fun func() (bool, error)) bool {
 	return outer.mailbox.EnqueueMsg(MsgExecFunc(fun))
 }
 
-func (inner *BasicServerInner) Init(self *Actor) (bool, error) {
-	inner.Mailbox = self.Mailbox
+func (inner *BasicServerInner) Init(*Actor) (bool, error) {
 	return false, nil
 }
 

@@ -78,6 +78,9 @@ func (actor *Actor) loop(head *cc.ChanCellHead, initResult chan error) {
 		}
 		if terminate || err != nil {
 			terminate = actor.HandleShutdown(err)
+			if !terminate {
+				err = nil
+			}
 		}
 	}
 	actor.cellTail.Terminate()
