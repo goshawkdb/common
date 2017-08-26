@@ -15,6 +15,7 @@ type Dialer interface {
 	Dial() error
 	Socket() net.Conn
 	Close()
+	Reset()
 	RemoteHost() string
 }
 
@@ -62,6 +63,10 @@ func (td *TCPDialer) Dial() error {
 	return nil
 }
 
+func (td *TCPDialer) Reset() {
+	td.socket = nil
+}
+
 func (td *TCPDialer) Socket() net.Conn {
 	return td.socket
 }
@@ -69,7 +74,6 @@ func (td *TCPDialer) Socket() net.Conn {
 func (td *TCPDialer) Close() {
 	if td.socket != nil {
 		td.socket.Close()
-		td.socket = nil
 	}
 }
 
@@ -99,15 +103,19 @@ func NewTLSCapnpHandshakerBase(dialer Dialer) *TLSCapnpHandshakerBase {
 	}
 }
 
+func (tchb *TLSCapnpHandshakerBase) Reset() {
+	tchb.buf = nil
+	tchb.bufWriteOffset = 0
+	tchb.Dialer.Reset()
+}
+
 func (tchb *TLSCapnpHandshakerBase) InternalShutdown() {
+	// do not nuke out the dialer!
+	tchb.Dialer.Close()
 	if tchb.beater != nil {
 		tchb.beater.Stop()
 		tchb.beater = nil
 	}
-	// do not nuke out the dialer!
-	tchb.Dialer.Close()
-	tchb.buf = nil
-	tchb.bufWriteOffset = 0
 }
 
 func (tchb *TLSCapnpHandshakerBase) Send(msg []byte) error {
