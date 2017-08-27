@@ -4,6 +4,7 @@ import (
 	"fmt"
 	capn "github.com/glycerine/go-capnproto"
 	"github.com/go-kit/kit/log"
+	"goshawkdb.io/common/actor"
 	"io"
 	"math/rand"
 	"net"
@@ -14,6 +15,7 @@ type Dialer interface {
 	Dial() error
 	Socket() net.Conn
 	Close()
+	Reset()
 	RemoteHost() string
 }
 
@@ -61,6 +63,10 @@ func (td *TCPDialer) Dial() error {
 	return nil
 }
 
+func (td *TCPDialer) Reset() {
+	td.socket = nil
+}
+
 func (td *TCPDialer) Socket() net.Conn {
 	return td.socket
 }
@@ -68,7 +74,6 @@ func (td *TCPDialer) Socket() net.Conn {
 func (td *TCPDialer) Close() {
 	if td.socket != nil {
 		td.socket.Close()
-		td.socket = nil
 	}
 }
 
@@ -98,15 +103,19 @@ func NewTLSCapnpHandshakerBase(dialer Dialer) *TLSCapnpHandshakerBase {
 	}
 }
 
+func (tchb *TLSCapnpHandshakerBase) Reset() {
+	tchb.buf = nil
+	tchb.bufWriteOffset = 0
+	tchb.Dialer.Reset()
+}
+
 func (tchb *TLSCapnpHandshakerBase) InternalShutdown() {
+	// do not nuke out the dialer!
+	tchb.Dialer.Close()
 	if tchb.beater != nil {
 		tchb.beater.Stop()
 		tchb.beater = nil
 	}
-	// do not nuke out the dialer!
-	tchb.Dialer.Close()
-	tchb.buf = nil
-	tchb.bufWriteOffset = 0
 }
 
 func (tchb *TLSCapnpHandshakerBase) Send(msg []byte) error {
@@ -187,7 +196,7 @@ func (tchb *TLSCapnpHandshakerBase) attemptCapnpDecode() (*capn.Segment, error) 
 	}
 }
 
-func (tchb *TLSCapnpHandshakerBase) CreateBeater(conn ConnectionActor, beatBytes []byte) {
+func (tchb *TLSCapnpHandshakerBase) CreateBeater(conn actor.EnqueueMsgActor, beatBytes []byte) {
 	if tchb.beater == nil {
 		tchb.beater = NewTLSCapnpBeater(tchb, conn, beatBytes)
 		tchb.beater.Start()
@@ -198,7 +207,7 @@ func (tchb *TLSCapnpHandshakerBase) CreateBeater(conn ConnectionActor, beatBytes
 
 type TLSCapnpBeater struct {
 	*TLSCapnpHandshakerBase
-	conn         ConnectionActor
+	conn         actor.EnqueueMsgActor
 	beatBytes    []byte
 	terminate    chan struct{}
 	terminated   chan struct{}
@@ -206,7 +215,7 @@ type TLSCapnpBeater struct {
 	mustSendBeat bool
 }
 
-func NewTLSCapnpBeater(tchb *TLSCapnpHandshakerBase, conn ConnectionActor, beatBytes []byte) *TLSCapnpBeater {
+func NewTLSCapnpBeater(tchb *TLSCapnpHandshakerBase, conn actor.EnqueueMsgActor, beatBytes []byte) *TLSCapnpBeater {
 	return &TLSCapnpBeater{
 		TLSCapnpHandshakerBase: tchb,
 		beatBytes:              beatBytes,
@@ -247,17 +256,17 @@ func (b *TLSCapnpBeater) tick() {
 		case <-b.terminate:
 			return
 		case <-b.ticker.C:
-			if !b.conn.EnqueueFuncError(b.beat) {
+			if !b.conn.EnqueueMsg(b) {
 				return
 			}
 		}
 	}
 }
 
-func (b *TLSCapnpBeater) beat() error {
+func (b *TLSCapnpBeater) Exec() (bool, error) {
 	if b != nil && b.TLSCapnpHandshakerBase != nil {
 		if b.mustSendBeat {
-			return b.SendMessage(b.beatBytes)
+			return false, b.SendMessage(b.beatBytes)
 		} else {
 			b.mustSendBeat = true
 		}
@@ -268,7 +277,7 @@ func (b *TLSCapnpBeater) beat() error {
 			}
 		*/
 	}
-	return nil
+	return false, nil
 }
 
 func (b *TLSCapnpBeater) SendMessage(msg []byte) error {
@@ -282,7 +291,7 @@ func (b *TLSCapnpBeater) SendMessage(msg []byte) error {
 // Reader
 
 type SocketReader struct {
-	conn ConnectionActor
+	conn actor.EnqueueFuncActor
 	SocketMsgHandler
 	terminate  chan struct{}
 	terminated chan struct{}
@@ -292,7 +301,7 @@ type SocketMsgHandler interface {
 	ReadAndHandleOneMsg() error
 }
 
-func NewSocketReader(conn ConnectionActor, smh SocketMsgHandler) *SocketReader {
+func NewSocketReader(conn actor.EnqueueFuncActor, smh SocketMsgHandler) *SocketReader {
 	return &SocketReader{
 		conn:             conn,
 		SocketMsgHandler: smh,
@@ -326,13 +335,9 @@ func (sr *SocketReader) read() {
 			return
 		default:
 			if err := sr.ReadAndHandleOneMsg(); err != nil {
-				sr.conn.EnqueueFuncError(func() error { return err }) // connectionReadError{error: err})
+				sr.conn.EnqueueFuncAsync(func() (bool, error) { return false, err })
 				return
 			}
 		}
 	}
-}
-
-type ConnectionActor interface {
-	EnqueueFuncError(func() error) bool
 }
