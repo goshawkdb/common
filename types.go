@@ -230,85 +230,88 @@ func (rmIds RMIds) NonEmpty() RMIds {
 	return nonEmpty
 }
 
-var MaxCapability *Capability
+type Capability uint8
+
+const (
+	NoneCapability Capability = iota
+	ReadOnlyCapability
+	WriteOnlyCapability
+	ReadWriteCapability
+)
+
+var capabilities = make([]msgs.Capability, 4)
 
 func init() {
 	seg := capn.NewBuffer(nil)
 	cap := msgs.NewCapability(seg)
+	cap.SetNone()
+	capabilities[NoneCapability] = cap
+
+	cap = msgs.NewCapability(seg)
+	cap.SetRead()
+	capabilities[ReadOnlyCapability] = cap
+
+	cap = msgs.NewCapability(seg)
+	cap.SetWrite()
+	capabilities[WriteOnlyCapability] = cap
+
+	cap = msgs.NewCapability(seg)
 	cap.SetReadWrite()
-	MaxCapability = NewCapability(cap)
+	capabilities[ReadWriteCapability] = cap
 }
 
-type Capability struct {
-	msgs.Capability
-}
-
-func NewCapability(c msgs.Capability) *Capability {
-	return &Capability{Capability: c}
-}
-
-func (a *Capability) Equal(b *Capability) bool {
-	return a == b || a.Which() == b.Which()
-}
-
-func (c *Capability) String() string {
+func NewCapability(c msgs.Capability) Capability {
 	switch c.Which() {
+	case msgs.CAPABILITY_NONE:
+		return NoneCapability
 	case msgs.CAPABILITY_READ:
-		return "Read"
+		return ReadOnlyCapability
 	case msgs.CAPABILITY_WRITE:
-		return "Write"
+		return WriteOnlyCapability
 	case msgs.CAPABILITY_READWRITE:
+		return ReadWriteCapability
+	default:
+		panic(fmt.Sprintf("Unexpected capability: %v", c.Which()))
+	}
+}
+
+func (c Capability) AsMsg() msgs.Capability {
+	return capabilities[c]
+}
+
+func (c Capability) String() string {
+	switch c {
+	case NoneCapability:
+		return "None"
+	case ReadOnlyCapability:
+		return "Read"
+	case WriteOnlyCapability:
+		return "Write"
+	case ReadWriteCapability:
 		return "ReadWrite"
 	default:
-		return "None"
+		panic(fmt.Sprintf("Unexpected capability value: %#v", c))
 	}
 }
 
-func (a *Capability) Union(b *Capability) *Capability {
-	switch {
-	case a == b:
-		return a
-	case a == MaxCapability || b == MaxCapability:
-		return MaxCapability
-	case a == nil:
-		return b
-	case b == nil:
-		return a
-	}
+func (c Capability) CanRead() bool {
+	return (c & ReadOnlyCapability) == ReadOnlyCapability
+}
 
-	aCap := a.Which()
-	bCap := b.Which()
+func (c Capability) CanWrite() bool {
+	return (c & WriteOnlyCapability) == WriteOnlyCapability
+}
 
-	switch {
-	case aCap == msgs.CAPABILITY_NONE:
-		return b
-	case bCap == msgs.CAPABILITY_NONE:
-		return a
-	case aCap == bCap:
-		return a
-	case aCap == msgs.CAPABILITY_READWRITE || bCap == msgs.CAPABILITY_READWRITE:
-		return MaxCapability
-	}
+func (c Capability) DenyRead() Capability {
+	return c &^ ReadOnlyCapability
+}
 
-	read := aCap == msgs.CAPABILITY_READ || bCap == msgs.CAPABILITY_READ
-	write := aCap == msgs.CAPABILITY_WRITE || bCap == msgs.CAPABILITY_WRITE
+func (c Capability) DenyWrite() Capability {
+	return c &^ WriteOnlyCapability
+}
 
-	if read && write {
-		return MaxCapability
-	}
-
-	seg := capn.NewBuffer(nil)
-	cap := msgs.NewCapability(seg)
-	switch {
-	case read:
-		cap.SetRead()
-	case write:
-		cap.SetWrite()
-	default:
-		panic("Internal logic failure - the 'impossible' happened.")
-	}
-
-	return NewCapability(cap)
+func (a Capability) Union(b Capability) Capability {
+	return a | b
 }
 
 type SortUInt32 []uint32
