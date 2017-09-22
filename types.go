@@ -295,11 +295,11 @@ func (c Capability) String() string {
 }
 
 func (c Capability) CanRead() bool {
-	return (c & ReadOnlyCapability) == ReadOnlyCapability
+	return c.IsSubset(ReadOnlyCapability)
 }
 
 func (c Capability) CanWrite() bool {
-	return (c & WriteOnlyCapability) == WriteOnlyCapability
+	return c.IsSubset(WriteOnlyCapability)
 }
 
 func (c Capability) DenyRead() Capability {
@@ -308,6 +308,11 @@ func (c Capability) DenyRead() Capability {
 
 func (c Capability) DenyWrite() Capability {
 	return c &^ WriteOnlyCapability
+}
+
+// returns b is a subset of a
+func (a Capability) IsSubset(b Capability) bool {
+	return a&b == b
 }
 
 func (a Capability) Union(b Capability) Capability {

@@ -1,6 +1,7 @@
 package msgpack
 
 import (
+	"fmt"
 	msgs "goshawkdb.io/common/capnp"
 )
 
@@ -53,9 +54,9 @@ func (cto *ClientTxnOutcome) FromCapnp(msg msgs.ClientTxnOutcome) *ClientTxnOutc
 		cto.Commit = true
 	case msgs.CLIENTTXNOUTCOME_ABORT:
 		abort := msg.Abort()
-		cto.Abort = make([]*ClientUpdate, abort.Len())
+		cto.Abort = make([]*ClientAction, abort.Len())
 		for idx := range cto.Abort {
-			cto.Abort[idx] = (&ClientUpdate{}).FromCapnp(abort.At(idx))
+			cto.Abort[idx] = (&ClientAction{}).FromCapnp(abort.At(idx))
 		}
 	case msgs.CLIENTTXNOUTCOME_ERROR:
 		cto.Error = msg.Error()
@@ -65,66 +66,35 @@ func (cto *ClientTxnOutcome) FromCapnp(msg msgs.ClientTxnOutcome) *ClientTxnOutc
 	return cto
 }
 
-func (cu *ClientUpdate) FromCapnp(msg msgs.ClientUpdate) *ClientUpdate {
-	cu.Version = msg.Version()
-	actions := msg.Actions()
-	cu.Actions = make([]*ClientAction, actions.Len())
-	for idx := range cu.Actions {
-		cu.Actions[idx] = (&ClientAction{}).FromCapnp(actions.At(idx))
-	}
-	return cu
-}
-
 func (a *ClientAction) FromCapnp(msg msgs.ClientAction) *ClientAction {
 	a.VarId = msg.VarId()
-	a.Read = nil
-	a.Write = nil
-	a.ReadWrite = nil
-	a.Create = nil
-	a.Delete = false
-	switch msg.Which() {
-	case msgs.CLIENTACTION_READ:
-		a.Read = &ClientActionRead{Version: msg.Read().Version()}
-
-	case msgs.CLIENTACTION_WRITE:
-		write := msg.Write()
-		refs := write.References()
-		a.Write = &ClientActionWrite{
-			Value:      write.Value(),
-			References: make([]*ClientVarId, refs.Len()),
+	if msg.Which() == msgs.CLIENTACTION_MODIFIED {
+		modified := msg.Modified()
+		msgRefs := modified.References()
+		refs := make([]*ClientVarId, msgRefs.Len())
+		for idx := range refs {
+			refs[idx] = (&ClientVarId{}).FromCapnp(msgRefs.At(idx))
 		}
-		for idx := range a.Write.References {
-			a.Write.References[idx] = (&ClientVarId{}).FromCapnp(refs.At(idx))
+		a.Modified = &ClientActionModify{
+			Value:      modified.Value(),
+			References: refs,
 		}
-
-	case msgs.CLIENTACTION_READWRITE:
-		rw := msg.Readwrite()
-		refs := rw.References()
-		a.ReadWrite = &ClientActionReadWrite{
-			Version:    rw.Version(),
-			Value:      rw.Value(),
-			References: make([]*ClientVarId, refs.Len()),
-		}
-		for idx := range a.ReadWrite.References {
-			a.ReadWrite.References[idx] = (&ClientVarId{}).FromCapnp(refs.At(idx))
-		}
-
-	case msgs.CLIENTACTION_CREATE:
-		create := msg.Create()
-		refs := create.References()
-		a.Create = &ClientActionCreate{
-			Value:      create.Value(),
-			References: make([]*ClientVarId, refs.Len()),
-		}
-		for idx := range a.Create.References {
-			a.Create.References[idx] = (&ClientVarId{}).FromCapnp(refs.At(idx))
-		}
-
-	case msgs.CLIENTACTION_DELETE:
-		a.Delete = true
-
+	} else {
+		a.Modified = nil
+	}
+	switch msg.ActionType() {
+	case msgs.CLIENTACTIONTYPE_CREATE:
+		a.ActionType = CreateActionType
+	case msgs.CLIENTACTIONTYPE_READONLY:
+		a.ActionType = ReadOnlyActionType
+	case msgs.CLIENTACTIONTYPE_WRITEONLY:
+		a.ActionType = WriteOnlyActionType
+	case msgs.CLIENTACTIONTYPE_READWRITE:
+		a.ActionType = ReadWriteActionType
+	case msgs.CLIENTACTIONTYPE_DELETE:
+		a.ActionType = DeleteActionType
 	default:
-		panic("Unexpected action type")
+		panic(fmt.Sprintf("Unexpected action type: %v", msg.ActionType()))
 	}
 	return a
 }

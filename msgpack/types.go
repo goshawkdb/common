@@ -78,62 +78,47 @@ type ClientTxnOutcome struct {
 	// Abort.length will be > 0. Abort will contain the updates which
 	// the client should apply to its cache and then the client should
 	// rerun the transaction.
-	Abort []*ClientUpdate
+	Abort []*ClientAction
 	// If some error occured then this is provided.
 	Error string
 }
 
-// Essentially, a ClientUpdate is the write components of some other
-// transaction that has collided with this client's own transaction.
-type ClientUpdate struct {
-	// The TxnId of the other transaction
-	Version []byte
-	// The actions which should be applied against the client
-	// cache. This will only consist of Write and Delete actions.
-	Actions []*ClientAction
-}
-
-// All ClientActions must specify the VarId. The remaining fields are
-// mutually exclusive: exactly 1 of Read, Write, ReadWrite, Create and
-// Delete should be specified. When the client sends this type to the
-// server (as part of a Txn Submission), Delete is never true. When
-// the server sends this type to the client (as part of a
-// ClientUpdate), only Write and Delete will ever be used.
+// All ClientActions must specify the VarId and an ActionType. When
+// the client sends this type to the server (as part of a Txn
+// Submission), it may not use DeleteActionType. When the server sends
+// this type to the client (as part of a ClientTxnOutcome) only
+// WriteOnlyActionType and DeleteActionType will be used. Modified
+// must be nil iff ActionType is ReadOnlyActionType or
+// DeleteActionType.
 type ClientAction struct {
 	// The Object Id. For newly created objects, the client should use
 	// a uint64 in Big Endian as the first 8 bytes, followed by the
 	// namespace as the latter 12 bytes. The client should maintain
 	// independent counters for the created Object Id, and Txn Id.
-	VarId     []byte
-	Read      *ClientActionRead
-	Write     *ClientActionWrite
-	ReadWrite *ClientActionReadWrite
-	Create    *ClientActionCreate
+	VarId      []byte
+	Modified   *ClientActionModify
+	ActionType ClientActionType
+}
+
+type ClientActionModify struct {
+	Value      []byte
+	References []*ClientVarId
+}
+
+type ClientActionType uint8
+
+const (
+	CreateActionType    ClientActionType = 0
+	ReadOnlyActionType  ClientActionType = 1
+	WriteOnlyActionType ClientActionType = 2
+	ReadWriteActionType ClientActionType = 3
 	// Used by the server to indicate that it knows the client's cached
 	// copy of this object is out of date, but the server isn't able to
 	// provide an updated value at this point. So the client must
 	// simply forget about this object, and if it needs to access this
-	// object in the future, then it must reload it (i.e. submit a read
-	// only transaction with object version 0).
-	Delete bool
-}
-
-type ClientActionRead struct {
-	Version []byte
-}
-type ClientActionWrite struct {
-	Value      []byte
-	References []*ClientVarId
-}
-type ClientActionReadWrite struct {
-	Version    []byte
-	Value      []byte
-	References []*ClientVarId
-}
-type ClientActionCreate struct {
-	Value      []byte
-	References []*ClientVarId
-}
+	// object in the future, then it must reload it.
+	DeleteActionType ClientActionType = 4
+)
 
 // Pointers in GoshawkDB not only indicate the Id of the object being
 // pointed to, but also contain a capability which constains the
