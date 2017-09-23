@@ -97,6 +97,10 @@ func (txnId TxnId) RMId(ifEmpty RMId) RMId {
 	}
 }
 
+func (txnId *TxnId) IsZero() bool {
+	return txnId == VersionZero || bytes.Equal(txnId[:], VersionZero[:])
+}
+
 type Cmp int8
 
 const (
