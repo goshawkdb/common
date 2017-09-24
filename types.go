@@ -26,9 +26,7 @@ func (rmId RMId) String() string {
 	}
 }
 
-type KeyType [KeyLen]byte
-
-type VarUUId KeyType
+type VarUUId [KeyLen]byte
 
 func MakeVarUUId(data []byte) *VarUUId {
 	uuid := VarUUId([KeyLen]byte{})
@@ -61,7 +59,7 @@ func (vUUId VarUUId) RMId() RMId {
 	return RMId(binary.BigEndian.Uint32(vUUId[16:20]))
 }
 
-type TxnId KeyType
+type TxnId [KeyLen]byte
 
 func MakeTxnId(data []byte) *TxnId {
 	id := TxnId([KeyLen]byte{})
@@ -75,7 +73,9 @@ func (txnId TxnId) String() string {
 	return fmt.Sprintf("TxnId:%s-%s-%s-%v", client, conn, boot, rmId)
 }
 
-func (txnId TxnId) ClientId() [ClientLen]byte {
+type ClientId [ClientLen]byte
+
+func (txnId TxnId) ClientId() ClientId {
 	client := [ClientLen]byte{}
 	copy(client[:], txnId[8:])
 	return client
@@ -99,6 +99,12 @@ func (txnId TxnId) RMId(ifEmpty RMId) RMId {
 
 func (txnId *TxnId) IsZero() bool {
 	return txnId == VersionZero || bytes.Equal(txnId[:], VersionZero[:])
+}
+
+func MakeClientId(data []byte) *ClientId {
+	clientId := ClientId([ClientLen]byte{})
+	copy(clientId[:], data)
+	return &clientId
 }
 
 type Cmp int8
