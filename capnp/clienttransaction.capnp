@@ -19,29 +19,22 @@ struct ClientTxn {
 struct ClientAction {
   varId      @0: Data;
   union {
-    read :group {
-      version    @1: Data;
-    }
-    write :group {
+    unmodified   @1: Void;
+    modified :group {
       value      @2: Data;
       references @3: List(ClientVarIdPos);
     }
-    readwrite :group {
-      version    @4: Data;
-      value      @5: Data;
-      references @6: List(ClientVarIdPos);
-    }
-    create :group {
-      value      @7: Data;
-      references @8: List(ClientVarIdPos);
-    }
-    delete       @9: Void;
-    roll :group {
-      version    @10: Data;
-      value      @11: Data;
-      references @12: List(ClientVarIdPos);
-    }
   }
+  actionType @4: ClientActionType;
+}
+
+enum ClientActionType {
+  create    @0;
+  readOnly  @1;
+  writeOnly @2;
+  readWrite @3;
+  delete    @4;
+  roll      @5;
 }
 
 struct ClientTxnOutcome {
@@ -49,14 +42,9 @@ struct ClientTxnOutcome {
   finalId @1: Data;
   union {
     commit @2: Void;
-    abort  @3: List(ClientUpdate);
+    abort  @3: List(ClientAction);
     error  @4: Text;
   }
-}
-
-struct ClientUpdate {
-  version @0: Data;
-  actions @1: List(ClientAction);
 }
 
 struct ClientVarIdPos {

@@ -33,74 +33,41 @@ func (a *ClientAction) SetCapnp(seg *capn.Segment, msg msgs.ClientAction) error 
 		return errors.New("Invalid Var Id in ClientAction (incorrect length).")
 	}
 	msg.SetVarId(a.VarId)
-	actionCount := 0
-	if a.Read != nil {
-		actionCount++
-	}
-	if a.Write != nil {
-		actionCount++
-	}
-	if a.ReadWrite != nil {
-		actionCount++
-	}
-	if a.Create != nil {
-		actionCount++
-	}
-	if actionCount != 1 {
-		return errors.New("Invalid ClientAction: exactly one action type must be non-nil.")
-	}
-	switch {
-	case a.Read != nil:
-		read := a.Read
-		msg.SetRead()
-		readMsg := msg.Read()
-		if len(read.Version) != common.KeyLen {
-			return errors.New("Invalid read.Version in ClientAction (incorrect length).")
-		}
-		readMsg.SetVersion(read.Version)
-
-	case a.Write != nil:
-		write := a.Write
-		msg.SetWrite()
-		writeMsg := msg.Write()
-		writeMsg.SetValue(write.Value)
-		refsMsg := msgs.NewClientVarIdPosList(seg, len(write.References))
-		for idx, ref := range write.References {
+	isModified := a.Modified != nil
+	if isModified {
+		modified := a.Modified
+		msg.SetModified()
+		modifiedMsg := msg.Modified()
+		modifiedMsg.SetValue(modified.Value)
+		refsMsg := msgs.NewClientVarIdPosList(seg, len(modified.References))
+		for idx, ref := range modified.References {
 			if err := ref.SetCapnp(seg, refsMsg.At(idx)); err != nil {
 				return err
 			}
 		}
-		writeMsg.SetReferences(refsMsg)
-
-	case a.ReadWrite != nil:
-		rw := a.ReadWrite
-		msg.SetReadwrite()
-		rwMsg := msg.Readwrite()
-		if len(rw.Version) != common.KeyLen {
-			return errors.New("Invalid ReadWrite.Version in ClientAction (incorrect length).")
-		}
-		rwMsg.SetVersion(rw.Version)
-		rwMsg.SetValue(rw.Value)
-		refsMsg := msgs.NewClientVarIdPosList(seg, len(rw.References))
-		for idx, ref := range rw.References {
-			if err := ref.SetCapnp(seg, refsMsg.At(idx)); err != nil {
-				return err
-			}
-		}
-		rwMsg.SetReferences(refsMsg)
-
-	case a.Create != nil:
-		create := a.Create
-		msg.SetCreate()
-		createMsg := msg.Create()
-		createMsg.SetValue(create.Value)
-		refsMsg := msgs.NewClientVarIdPosList(seg, len(create.References))
-		for idx, ref := range create.References {
-			if err := ref.SetCapnp(seg, refsMsg.At(idx)); err != nil {
-				return err
-			}
-		}
-		createMsg.SetReferences(refsMsg)
+		modifiedMsg.SetReferences(refsMsg)
+	} else {
+		msg.SetUnmodified()
+	}
+	needsModified := true
+	switch a.ActionType {
+	case CreateActionType:
+		msg.SetActionType(msgs.CLIENTACTIONTYPE_CREATE)
+	case ReadOnlyActionType:
+		msg.SetActionType(msgs.CLIENTACTIONTYPE_READONLY)
+		needsModified = false
+	case WriteOnlyActionType:
+		msg.SetActionType(msgs.CLIENTACTIONTYPE_WRITEONLY)
+	case ReadWriteActionType:
+		msg.SetActionType(msgs.CLIENTACTIONTYPE_READWRITE)
+	case DeleteActionType:
+		msg.SetActionType(msgs.CLIENTACTIONTYPE_DELETE)
+		needsModified = false
+	default:
+		return fmt.Errorf("Invalid ClientActionType: %v", a.ActionType)
+	}
+	if needsModified != isModified {
+		return fmt.Errorf("Modification required: %v; Modification provided: %v", needsModified, isModified)
 	}
 	return nil
 }
