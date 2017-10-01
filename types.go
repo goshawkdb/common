@@ -70,14 +70,16 @@ func MakeTxnId(data []byte) *TxnId {
 func (txnId TxnId) String() string {
 	t := txnId[:]
 	client, conn, boot, rmId := hex.EncodeToString(t[0:8]), hex.EncodeToString(t[8:12]), hex.EncodeToString(t[12:16]), hex.EncodeToString(t[16:20])
-	return fmt.Sprintf("TxnId:%s-%s-%s-%v", client, conn, boot, rmId)
+	return fmt.Sprintf("TxnId:%s-%s-%s-%s", client, conn, boot, rmId)
 }
 
-type ClientId [ClientLen]byte
-
-func (txnId TxnId) ClientId() ClientId {
+func (txnId TxnId) ClientId(ifEmpty RMId) ClientId {
 	client := [ClientLen]byte{}
 	copy(client[:], txnId[8:])
+	rmId := binary.BigEndian.Uint32(txnId[16:20])
+	if rmId == 0 {
+		binary.BigEndian.PutUint32(client[8:12], uint32(ifEmpty))
+	}
 	return client
 }
 
@@ -90,7 +92,8 @@ func (txnId TxnId) BootCount() uint32 {
 }
 
 func (txnId TxnId) RMId(ifEmpty RMId) RMId {
-	if rmId := RMId(binary.BigEndian.Uint32(txnId[16:20])); rmId == RMIdEmpty {
+	rmId := RMId(binary.BigEndian.Uint32(txnId[16:20]))
+	if rmId == RMIdEmpty {
 		return ifEmpty
 	} else {
 		return rmId
@@ -101,11 +104,17 @@ func (txnId *TxnId) IsZero() bool {
 	return txnId == VersionZero || bytes.Equal(txnId[:], VersionZero[:])
 }
 
-func MakeClientId(data []byte) *ClientId {
-	clientId := ClientId([ClientLen]byte{})
-	copy(clientId[:], data)
-	return &clientId
+type TxnIds []TxnId
+
+type ClientId [ClientLen]byte
+
+func (cid ClientId) String() string {
+	c := cid[:]
+	conn, boot, rmId := hex.EncodeToString(c[0:4]), hex.EncodeToString(c[4:8]), hex.EncodeToString(c[8:12])
+	return fmt.Sprintf("CId:%s-%s-%s", conn, boot, rmId)
 }
+
+type ClientIds []ClientId
 
 type Cmp int8
 

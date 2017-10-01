@@ -272,8 +272,8 @@ func (b *TLSCapnpBeater) Exec() (bool, error) {
 		}
 		// Useful for testing recovery from network brownouts
 		/*
-			if b.rng.Intn(15) == 0 && b.dialer != nil {
-				return fmt.Errorf("Random death. Restarting connection.")
+			if b.rng.Intn(15) == 0 {
+				return false, fmt.Errorf("Random death. Restarting connection.")
 			}
 		*/
 	}
