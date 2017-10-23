@@ -47,6 +47,7 @@ func (vUUId VarUUId) String() string {
 	return fmt.Sprintf("VarUUId:%s", h)
 }
 
+/*
 func (vUUId VarUUId) ConnectionCount() uint32 {
 	return binary.BigEndian.Uint32(vUUId[8:12])
 }
@@ -58,6 +59,7 @@ func (vUUId VarUUId) BootCount() uint32 {
 func (vUUId VarUUId) RMId() RMId {
 	return RMId(binary.BigEndian.Uint32(vUUId[16:20]))
 }
+*/
 
 type TxnId [KeyLen]byte
 
@@ -104,9 +106,18 @@ func (txnId *TxnId) IsZero() bool {
 	return txnId == VersionZero || bytes.Equal(txnId[:], VersionZero[:])
 }
 
-type TxnIds []TxnId
+type TxnIds []*TxnId
+
+func (txnIds TxnIds) Sort()              { sort.Sort(txnIds) }
+func (txnIds TxnIds) Len() int           { return len(txnIds) }
+func (txnIds TxnIds) Less(i, j int) bool { return txnIds[i].Compare(txnIds[j]) == LT }
+func (txnIds TxnIds) Swap(i, j int)      { txnIds[i], txnIds[j] = txnIds[j], txnIds[i] }
 
 type ClientId [ClientLen]byte
+
+func (cid ClientId) RMId() RMId {
+	return RMId(binary.BigEndian.Uint32(cid[8:12]))
+}
 
 func (cid ClientId) String() string {
 	c := cid[:]
