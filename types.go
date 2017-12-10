@@ -75,11 +75,23 @@ func (txnId TxnId) String() string {
 	return fmt.Sprintf("TxnId:%s-%s-%s-%s", client, conn, boot, rmId)
 }
 
+func (txnId *TxnId) MakeRMIdConcrete(ifEmpty RMId) *TxnId {
+	rmId := RMId(binary.BigEndian.Uint32(txnId[16:20]))
+	if rmId == RMIdEmpty {
+		id := TxnId([KeyLen]byte{})
+		copy(id[:], txnId[:])
+		binary.BigEndian.PutUint32(id[16:20], uint32(ifEmpty))
+		return &id
+	} else {
+		return txnId
+	}
+}
+
 func (txnId TxnId) ClientId(ifEmpty RMId) ClientId {
 	client := [ClientLen]byte{}
 	copy(client[:], txnId[8:])
-	rmId := binary.BigEndian.Uint32(txnId[16:20])
-	if rmId == 0 {
+	rmId := RMId(binary.BigEndian.Uint32(txnId[16:20]))
+	if rmId == RMIdEmpty {
 		binary.BigEndian.PutUint32(client[8:12], uint32(ifEmpty))
 	}
 	return client
@@ -114,6 +126,12 @@ func (txnIds TxnIds) Less(i, j int) bool { return txnIds[i].Compare(txnIds[j]) =
 func (txnIds TxnIds) Swap(i, j int)      { txnIds[i], txnIds[j] = txnIds[j], txnIds[i] }
 
 type ClientId [ClientLen]byte
+
+func MakeClientId(data []byte) *ClientId {
+	id := ClientId([ClientLen]byte{})
+	copy(id[:], data)
+	return &id
+}
 
 func (cid ClientId) RMId() RMId {
 	return RMId(binary.BigEndian.Uint32(cid[8:12]))
