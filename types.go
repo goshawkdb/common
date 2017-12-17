@@ -75,18 +75,6 @@ func (txnId TxnId) String() string {
 	return fmt.Sprintf("TxnId:%s-%s-%s-%s", client, conn, boot, rmId)
 }
 
-func (txnId *TxnId) MakeRMIdConcrete(ifEmpty RMId) *TxnId {
-	rmId := RMId(binary.BigEndian.Uint32(txnId[16:20]))
-	if rmId == RMIdEmpty {
-		id := TxnId([KeyLen]byte{})
-		copy(id[:], txnId[:])
-		binary.BigEndian.PutUint32(id[16:20], uint32(ifEmpty))
-		return &id
-	} else {
-		return txnId
-	}
-}
-
 func (txnId TxnId) ClientId(ifEmpty RMId) ClientId {
 	client := [ClientLen]byte{}
 	copy(client[:], txnId[8:])
