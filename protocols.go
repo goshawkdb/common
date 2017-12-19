@@ -1,6 +1,7 @@
 package common
 
 import (
+	"errors"
 	"fmt"
 	capn "github.com/glycerine/go-capnproto"
 	"github.com/go-kit/kit/log"
@@ -196,9 +197,9 @@ func (tchb *TLSCapnpHandshakerBase) attemptCapnpDecode() (*capn.Segment, error) 
 	}
 }
 
-func (tchb *TLSCapnpHandshakerBase) CreateBeater(conn actor.EnqueueMsgActor, beatBytes []byte) {
+func (tchb *TLSCapnpHandshakerBase) CreateBeater(conn actor.EnqueueMsgActor, beatBytes []byte, drop bool) {
 	if tchb.beater == nil {
-		tchb.beater = NewTLSCapnpBeater(tchb, conn, beatBytes)
+		tchb.beater = NewTLSCapnpBeater(tchb, conn, beatBytes, drop)
 		tchb.beater.Start()
 	}
 }
@@ -213,9 +214,10 @@ type TLSCapnpBeater struct {
 	terminated   chan struct{}
 	ticker       *time.Ticker
 	mustSendBeat bool
+	periodicDrop bool
 }
 
-func NewTLSCapnpBeater(tchb *TLSCapnpHandshakerBase, conn actor.EnqueueMsgActor, beatBytes []byte) *TLSCapnpBeater {
+func NewTLSCapnpBeater(tchb *TLSCapnpHandshakerBase, conn actor.EnqueueMsgActor, beatBytes []byte, drop bool) *TLSCapnpBeater {
 	return &TLSCapnpBeater{
 		TLSCapnpHandshakerBase: tchb,
 		beatBytes:              beatBytes,
@@ -224,6 +226,7 @@ func NewTLSCapnpBeater(tchb *TLSCapnpHandshakerBase, conn actor.EnqueueMsgActor,
 		terminated:             make(chan struct{}),
 		ticker:                 time.NewTicker(HeartbeatInterval >> 1),
 		mustSendBeat:           true,
+		periodicDrop:           drop,
 	}
 }
 
@@ -271,11 +274,9 @@ func (b *TLSCapnpBeater) Exec() (bool, error) {
 			b.mustSendBeat = true
 		}
 		// Useful for testing recovery from network brownouts
-		/*
-			if b.rng.Intn(15) == 0 && b.dialer != nil {
-				return fmt.Errorf("Random death. Restarting connection.")
-			}
-		*/
+		if b.periodicDrop && b.rng.Intn(15) == 0 {
+			return false, errors.New("Random death. Restarting connection.")
+		}
 	}
 	return false, nil
 }
