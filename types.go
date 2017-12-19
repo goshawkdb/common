@@ -251,14 +251,17 @@ func init() {
 	cap.SetNone()
 	capabilities[NoneCapability] = cap
 
+	seg = capn.NewBuffer(nil)
 	cap = msgs.NewCapability(seg)
 	cap.SetRead()
 	capabilities[ReadOnlyCapability] = cap
 
+	seg = capn.NewBuffer(nil)
 	cap = msgs.NewCapability(seg)
 	cap.SetWrite()
 	capabilities[WriteOnlyCapability] = cap
 
+	seg = capn.NewBuffer(nil)
 	cap = msgs.NewCapability(seg)
 	cap.SetReadWrite()
 	capabilities[ReadWriteCapability] = cap
