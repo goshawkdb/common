@@ -29,12 +29,14 @@ struct ClientAction {
 }
 
 enum ClientActionType {
-  create    @0;
-  readOnly  @1;
-  writeOnly @2;
-  readWrite @3;
-  delete    @4;
-  roll      @5;
+  create          @0;
+  readOnly        @1;
+  writeOnly       @2;
+  readWrite       @3;
+  delete          @4;
+  roll            @5;
+  addSubscription @6;
+  delSubscription @7;
 }
 
 struct ClientTxnOutcome {

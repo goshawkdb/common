@@ -522,12 +522,14 @@ func (s ClientAction_List) Set(i int, item ClientAction) { C.PointerList(s).Set(
 type ClientActionType uint16
 
 const (
-	CLIENTACTIONTYPE_CREATE    ClientActionType = 0
-	CLIENTACTIONTYPE_READONLY  ClientActionType = 1
-	CLIENTACTIONTYPE_WRITEONLY ClientActionType = 2
-	CLIENTACTIONTYPE_READWRITE ClientActionType = 3
-	CLIENTACTIONTYPE_DELETE    ClientActionType = 4
-	CLIENTACTIONTYPE_ROLL      ClientActionType = 5
+	CLIENTACTIONTYPE_CREATE          ClientActionType = 0
+	CLIENTACTIONTYPE_READONLY        ClientActionType = 1
+	CLIENTACTIONTYPE_WRITEONLY       ClientActionType = 2
+	CLIENTACTIONTYPE_READWRITE       ClientActionType = 3
+	CLIENTACTIONTYPE_DELETE          ClientActionType = 4
+	CLIENTACTIONTYPE_ROLL            ClientActionType = 5
+	CLIENTACTIONTYPE_ADDSUBSCRIPTION ClientActionType = 6
+	CLIENTACTIONTYPE_DELSUBSCRIPTION ClientActionType = 7
 )
 
 func (c ClientActionType) String() string {
@@ -544,6 +546,10 @@ func (c ClientActionType) String() string {
 		return "delete"
 	case CLIENTACTIONTYPE_ROLL:
 		return "roll"
+	case CLIENTACTIONTYPE_ADDSUBSCRIPTION:
+		return "addSubscription"
+	case CLIENTACTIONTYPE_DELSUBSCRIPTION:
+		return "delSubscription"
 	default:
 		return ""
 	}
@@ -563,6 +569,10 @@ func ClientActionTypeFromString(c string) ClientActionType {
 		return CLIENTACTIONTYPE_DELETE
 	case "roll":
 		return CLIENTACTIONTYPE_ROLL
+	case "addSubscription":
+		return CLIENTACTIONTYPE_ADDSUBSCRIPTION
+	case "delSubscription":
+		return CLIENTACTIONTYPE_DELSUBSCRIPTION
 	default:
 		return 0
 	}
