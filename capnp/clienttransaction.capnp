@@ -12,38 +12,41 @@ using Cap = import "capabilities.capnp";
 
 struct ClientTxn {
   id      @0: Data;
-  retry   @1: Bool;
+  counter @1: UInt32;
   actions @2: List(ClientAction);
 }
 
 struct ClientAction {
-  varId      @0: Data;
-  union {
-    unmodified   @1: Void;
-    modified :group {
+  varId  @0: Data;
+  value :union {
+    missing @1: Void;
+    create :group {
       value      @2: Data;
       references @3: List(ClientVarIdPos);
     }
+    existing :group {
+      read @4: Bool;
+      modify :union {
+        not  @5: Void;
+        roll @6: Void;
+        write :group {
+          value      @7: Data;
+          references @8: List(ClientVarIdPos);
+        }
+      }
+    }
   }
-  actionType @4: ClientActionType;
-}
-
-enum ClientActionType {
-  create          @0;
-  readOnly        @1;
-  writeOnly       @2;
-  readWrite       @3;
-  delete          @4;
-  roll            @5;
-  addSubscription @6;
-  delSubscription @7;
+  meta :group {
+    addSub @9: Bool;  # requires create or read
+    delSub @10: Data; # requires read
+  }
 }
 
 struct ClientTxnOutcome {
   id      @0: Data;
   finalId @1: Data;
   union {
-    commit @2: Void;
+    commit @2: UInt32;
     abort  @3: List(ClientAction);
     error  @4: Text;
   }
