@@ -18,8 +18,8 @@ func AutoNewClientTxn(s *C.Segment) ClientTxn      { return ClientTxn(s.NewStruc
 func ReadRootClientTxn(s *C.Segment) ClientTxn     { return ClientTxn(s.Root(0).ToStruct()) }
 func (s ClientTxn) Id() []byte                     { return C.Struct(s).GetObject(0).ToData() }
 func (s ClientTxn) SetId(v []byte)                 { C.Struct(s).SetObject(0, s.Segment.NewData(v)) }
-func (s ClientTxn) Counter() uint32                { return C.Struct(s).Get32(0) }
-func (s ClientTxn) SetCounter(v uint32)            { C.Struct(s).Set32(0, v) }
+func (s ClientTxn) Counter() uint64                { return C.Struct(s).Get64(0) }
+func (s ClientTxn) SetCounter(v uint64)            { C.Struct(s).Set64(0, v) }
 func (s ClientTxn) Actions() ClientAction_List     { return ClientAction_List(C.Struct(s).GetObject(1)) }
 func (s ClientTxn) SetActions(v ClientAction_List) { C.Struct(s).SetObject(1, C.Object(v)) }
 func (s ClientTxn) WriteJSON(w io.Writer) error {
@@ -964,36 +964,37 @@ const (
 	CLIENTTXNOUTCOME_ERROR  ClientTxnOutcome_Which = 2
 )
 
-func NewClientTxnOutcome(s *C.Segment) ClientTxnOutcome { return ClientTxnOutcome(s.NewStruct(8, 3)) }
+func NewClientTxnOutcome(s *C.Segment) ClientTxnOutcome { return ClientTxnOutcome(s.NewStruct(16, 3)) }
 func NewRootClientTxnOutcome(s *C.Segment) ClientTxnOutcome {
-	return ClientTxnOutcome(s.NewRootStruct(8, 3))
+	return ClientTxnOutcome(s.NewRootStruct(16, 3))
 }
 func AutoNewClientTxnOutcome(s *C.Segment) ClientTxnOutcome {
-	return ClientTxnOutcome(s.NewStructAR(8, 3))
+	return ClientTxnOutcome(s.NewStructAR(16, 3))
 }
 func ReadRootClientTxnOutcome(s *C.Segment) ClientTxnOutcome {
 	return ClientTxnOutcome(s.Root(0).ToStruct())
 }
 func (s ClientTxnOutcome) Which() ClientTxnOutcome_Which {
-	return ClientTxnOutcome_Which(C.Struct(s).Get16(4))
+	return ClientTxnOutcome_Which(C.Struct(s).Get16(8))
 }
 func (s ClientTxnOutcome) Id() []byte          { return C.Struct(s).GetObject(0).ToData() }
 func (s ClientTxnOutcome) SetId(v []byte)      { C.Struct(s).SetObject(0, s.Segment.NewData(v)) }
 func (s ClientTxnOutcome) FinalId() []byte     { return C.Struct(s).GetObject(1).ToData() }
 func (s ClientTxnOutcome) SetFinalId(v []byte) { C.Struct(s).SetObject(1, s.Segment.NewData(v)) }
-func (s ClientTxnOutcome) Commit() uint32      { return C.Struct(s).Get32(0) }
-func (s ClientTxnOutcome) SetCommit(v uint32)  { C.Struct(s).Set16(4, 0); C.Struct(s).Set32(0, v) }
+func (s ClientTxnOutcome) Counter() uint64     { return C.Struct(s).Get64(0) }
+func (s ClientTxnOutcome) SetCounter(v uint64) { C.Struct(s).Set64(0, v) }
+func (s ClientTxnOutcome) SetCommit()          { C.Struct(s).Set16(8, 0) }
 func (s ClientTxnOutcome) Abort() ClientAction_List {
 	return ClientAction_List(C.Struct(s).GetObject(2))
 }
 func (s ClientTxnOutcome) SetAbort(v ClientAction_List) {
-	C.Struct(s).Set16(4, 1)
+	C.Struct(s).Set16(8, 1)
 	C.Struct(s).SetObject(2, C.Object(v))
 }
 func (s ClientTxnOutcome) Error() string      { return C.Struct(s).GetObject(2).ToText() }
 func (s ClientTxnOutcome) ErrorBytes() []byte { return C.Struct(s).GetObject(2).ToDataTrimLastByte() }
 func (s ClientTxnOutcome) SetError(v string) {
-	C.Struct(s).Set16(4, 2)
+	C.Struct(s).Set16(8, 2)
 	C.Struct(s).SetObject(2, s.Segment.NewText(v))
 }
 func (s ClientTxnOutcome) WriteJSON(w io.Writer) error {
@@ -1039,21 +1040,34 @@ func (s ClientTxnOutcome) WriteJSON(w io.Writer) error {
 			return err
 		}
 	}
+	err = b.WriteByte(',')
+	if err != nil {
+		return err
+	}
+	_, err = b.WriteString("\"counter\":")
+	if err != nil {
+		return err
+	}
+	{
+		s := s.Counter()
+		buf, err = json.Marshal(s)
+		if err != nil {
+			return err
+		}
+		_, err = b.Write(buf)
+		if err != nil {
+			return err
+		}
+	}
 	if s.Which() == CLIENTTXNOUTCOME_COMMIT {
 		_, err = b.WriteString("\"commit\":")
 		if err != nil {
 			return err
 		}
-		{
-			s := s.Commit()
-			buf, err = json.Marshal(s)
-			if err != nil {
-				return err
-			}
-			_, err = b.Write(buf)
-			if err != nil {
-				return err
-			}
+		_ = s
+		_, err = b.WriteString("null")
+		if err != nil {
+			return err
 		}
 	}
 	if s.Which() == CLIENTTXNOUTCOME_ABORT {
@@ -1159,21 +1173,34 @@ func (s ClientTxnOutcome) WriteCapLit(w io.Writer) error {
 			return err
 		}
 	}
+	_, err = b.WriteString(", ")
+	if err != nil {
+		return err
+	}
+	_, err = b.WriteString("counter = ")
+	if err != nil {
+		return err
+	}
+	{
+		s := s.Counter()
+		buf, err = json.Marshal(s)
+		if err != nil {
+			return err
+		}
+		_, err = b.Write(buf)
+		if err != nil {
+			return err
+		}
+	}
 	if s.Which() == CLIENTTXNOUTCOME_COMMIT {
 		_, err = b.WriteString("commit = ")
 		if err != nil {
 			return err
 		}
-		{
-			s := s.Commit()
-			buf, err = json.Marshal(s)
-			if err != nil {
-				return err
-			}
-			_, err = b.Write(buf)
-			if err != nil {
-				return err
-			}
+		_ = s
+		_, err = b.WriteString("null")
+		if err != nil {
+			return err
 		}
 	}
 	if s.Which() == CLIENTTXNOUTCOME_ABORT {
@@ -1240,7 +1267,7 @@ func (s ClientTxnOutcome) MarshalCapLit() ([]byte, error) {
 type ClientTxnOutcome_List C.PointerList
 
 func NewClientTxnOutcomeList(s *C.Segment, sz int) ClientTxnOutcome_List {
-	return ClientTxnOutcome_List(s.NewCompositeList(8, 3, sz))
+	return ClientTxnOutcome_List(s.NewCompositeList(16, 3, sz))
 }
 func (s ClientTxnOutcome_List) Len() int { return C.PointerList(s).Len() }
 func (s ClientTxnOutcome_List) At(i int) ClientTxnOutcome {

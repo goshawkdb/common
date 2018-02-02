@@ -12,7 +12,7 @@ using Cap = import "capabilities.capnp";
 
 struct ClientTxn {
   id      @0: Data;
-  counter @1: UInt32;
+  counter @1: UInt64;
   actions @2: List(ClientAction);
 }
 
@@ -45,10 +45,11 @@ struct ClientAction {
 struct ClientTxnOutcome {
   id      @0: Data;
   finalId @1: Data;
+  counter @2: UInt64;
   union {
-    commit @2: UInt32;
-    abort  @3: List(ClientAction);
-    error  @4: Text;
+    commit @3: Void;
+    abort  @4: List(ClientAction);
+    error  @5: Text;
   }
 }
 
