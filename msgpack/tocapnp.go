@@ -14,7 +14,7 @@ func (ctxn *ClientTxn) ToCapnp(seg *capn.Segment) (*msgs.ClientTxn, error) {
 		return nil, errors.New("Illegal ClientTxn: Invalid Txn Id (incorrect length).")
 	}
 	msg.SetId(ctxn.Id)
-	msg.SetRetry(ctxn.Retry)
+	msg.SetCounter(ctxn.Counter)
 	if len(ctxn.Actions) == 0 {
 		return nil, errors.New("Illegal ClientTxn: No actions.")
 	}
@@ -33,41 +33,51 @@ func (a *ClientAction) SetCapnp(seg *capn.Segment, msg msgs.ClientAction) error 
 		return errors.New("Invalid Var Id in ClientAction (incorrect length).")
 	}
 	msg.SetVarId(a.VarId)
-	isModified := a.Modified != nil
-	if isModified {
-		modified := a.Modified
-		msg.SetModified()
-		modifiedMsg := msg.Modified()
-		modifiedMsg.SetValue(modified.Value)
-		refsMsg := msgs.NewClientVarIdPosList(seg, len(modified.References))
-		for idx, ref := range modified.References {
+	msgValue := msg.Value()
+	aValue := &a.Value
+	if aValue.Missing {
+		msgValue.SetMissing()
+
+	} else if aCreate := aValue.Create; aCreate != nil {
+		msgValue.SetCreate()
+		msgCreate := msgValue.Create()
+		msgCreate.SetValue(aCreate.Value)
+		refsMsg := msgs.NewClientVarIdPosList(seg, len(aCreate.References))
+		for idx, ref := range aCreate.References {
 			if err := ref.SetCapnp(seg, refsMsg.At(idx)); err != nil {
 				return err
 			}
 		}
-		modifiedMsg.SetReferences(refsMsg)
+		msgCreate.SetReferences(refsMsg)
+
+	} else if aExisting := aValue.Existing; aExisting != nil {
+		msgValue.SetExisting()
+		msgExisting := msgValue.Existing()
+		msgExisting.SetRead(aExisting.Read)
+		msgModify := msgExisting.Modify()
+		if aModify := aExisting.Modify; aModify == nil {
+			msgModify.SetNot()
+		} else {
+			msgModify.SetWrite()
+			msgWrite := msgModify.Write()
+			msgWrite.SetValue(aModify.Value)
+			refsMsg := msgs.NewClientVarIdPosList(seg, len(aModify.References))
+			for idx, ref := range aModify.References {
+				if err := ref.SetCapnp(seg, refsMsg.At(idx)); err != nil {
+					return err
+				}
+			}
+			msgWrite.SetReferences(refsMsg)
+		}
+
 	} else {
-		msg.SetUnmodified()
+		return errors.New("Invalid Action: no value action found.")
 	}
-	needsModified := true
-	switch a.ActionType {
-	case CreateActionType:
-		msg.SetActionType(msgs.CLIENTACTIONTYPE_CREATE)
-	case ReadOnlyActionType:
-		msg.SetActionType(msgs.CLIENTACTIONTYPE_READONLY)
-		needsModified = false
-	case WriteOnlyActionType:
-		msg.SetActionType(msgs.CLIENTACTIONTYPE_WRITEONLY)
-	case ReadWriteActionType:
-		msg.SetActionType(msgs.CLIENTACTIONTYPE_READWRITE)
-	case DeleteActionType:
-		msg.SetActionType(msgs.CLIENTACTIONTYPE_DELETE)
-		needsModified = false
-	default:
-		return fmt.Errorf("Invalid ClientActionType: %v", a.ActionType)
-	}
-	if needsModified != isModified {
-		return fmt.Errorf("Modification required: %v; Modification provided: %v", needsModified, isModified)
+	aMeta := &a.Meta
+	msgMeta := msg.Meta()
+	msgMeta.SetAddSub(aMeta.AddSub)
+	if len(aMeta.DelSub) != 0 {
+		msgMeta.SetDelSub(aMeta.DelSub)
 	}
 	return nil
 }

@@ -1,7 +1,6 @@
 package msgpack
 
 import (
-	"fmt"
 	msgs "goshawkdb.io/common/capnp"
 )
 
@@ -34,7 +33,7 @@ func (c *Capability) FromCapnp(msg msgs.Capability) *Capability {
 
 func (ctxn *ClientTxn) FromCapnp(msg msgs.ClientTxn) *ClientTxn {
 	ctxn.Id = msg.Id()
-	ctxn.Retry = msg.Retry()
+	ctxn.Counter = msg.Counter()
 	actions := msg.Actions()
 	ctxn.Actions = make([]*ClientAction, actions.Len())
 	for idx := range ctxn.Actions {
@@ -46,6 +45,7 @@ func (ctxn *ClientTxn) FromCapnp(msg msgs.ClientTxn) *ClientTxn {
 func (cto *ClientTxnOutcome) FromCapnp(msg msgs.ClientTxnOutcome) *ClientTxnOutcome {
 	cto.Id = msg.Id()
 	cto.FinalId = msg.FinalId()
+	cto.Counter = msg.Counter()
 	cto.Commit = false
 	cto.Abort = nil
 	cto.Error = ""
@@ -68,33 +68,46 @@ func (cto *ClientTxnOutcome) FromCapnp(msg msgs.ClientTxnOutcome) *ClientTxnOutc
 
 func (a *ClientAction) FromCapnp(msg msgs.ClientAction) *ClientAction {
 	a.VarId = msg.VarId()
-	if msg.Which() == msgs.CLIENTACTION_MODIFIED {
-		modified := msg.Modified()
-		msgRefs := modified.References()
-		refs := make([]*ClientVarId, msgRefs.Len())
-		for idx := range refs {
-			refs[idx] = (&ClientVarId{}).FromCapnp(msgRefs.At(idx))
+	aValue := &a.Value
+	msgValue := msg.Value()
+	switch msgValue.Which() {
+	case msgs.CLIENTACTIONVALUE_MISSING:
+		aValue.Missing = true
+	case msgs.CLIENTACTIONVALUE_CREATE:
+		msgCreate := msgValue.Create()
+		msgRefs := msgCreate.References()
+		aRefs := make([]*ClientVarId, msgRefs.Len())
+		for idx := range aRefs {
+			aRefs[idx] = (&ClientVarId{}).FromCapnp(msgRefs.At(idx))
 		}
-		a.Modified = &ClientActionModify{
-			Value:      modified.Value(),
-			References: refs,
+		aValue.Create = &ClientActionValueCreate{
+			Value:      msgCreate.Value(),
+			References: aRefs,
 		}
-	} else {
-		a.Modified = nil
+	case msgs.CLIENTACTIONVALUE_EXISTING:
+		msgExisting := msgValue.Existing()
+		aValue.Existing = &ClientActionValueExisting{
+			Read: msgExisting.Read(),
+		}
+		msgModify := msgExisting.Modify()
+		if msgModify.Which() == msgs.CLIENTACTIONVALUEEXISTINGMODIFY_WRITE {
+			msgWrite := msgModify.Write()
+			msgRefs := msgWrite.References()
+			aRefs := make([]*ClientVarId, msgRefs.Len())
+			for idx := range aRefs {
+				aRefs[idx] = (&ClientVarId{}).FromCapnp(msgRefs.At(idx))
+			}
+			aValue.Existing.Modify = &ClientActionValueExistingModify{
+				Value:      msgWrite.Value(),
+				References: aRefs,
+			}
+		}
 	}
-	switch msg.ActionType() {
-	case msgs.CLIENTACTIONTYPE_CREATE:
-		a.ActionType = CreateActionType
-	case msgs.CLIENTACTIONTYPE_READONLY:
-		a.ActionType = ReadOnlyActionType
-	case msgs.CLIENTACTIONTYPE_WRITEONLY:
-		a.ActionType = WriteOnlyActionType
-	case msgs.CLIENTACTIONTYPE_READWRITE:
-		a.ActionType = ReadWriteActionType
-	case msgs.CLIENTACTIONTYPE_DELETE:
-		a.ActionType = DeleteActionType
-	default:
-		panic(fmt.Sprintf("Unexpected action type: %v", msg.ActionType()))
+	msgMeta := msg.Meta()
+	aMeta := &a.Meta
+	aMeta.AddSub = msgMeta.AddSub()
+	if delSub := msgMeta.DelSub(); len(delSub) != 0 {
+		aMeta.DelSub = delSub
 	}
 	return a
 }

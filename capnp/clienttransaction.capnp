@@ -28,7 +28,7 @@ struct ClientAction {
       read @4: Bool;
       modify :union {
         not  @5: Void;
-        roll @6: Void;
+        roll @6: Void; # requires read
         write :group {
           value      @7: Data;
           references @8: List(ClientVarIdPos);
